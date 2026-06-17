@@ -74,6 +74,10 @@ class ListParentInvoices extends ListRecords
     public function getTabs(): array
     {
         return [
+                    'all' => Tab::make(__('All'))
+                        ->icon('heroicon-o-squares-2x2')
+                        ->badge(fn () => $this->getModel()::count())
+                        ->badgeColor('gray'),
 
                     'partial' => Tab::make(__('Partial'))
                         ->icon('heroicon-o-clock')
@@ -92,11 +96,6 @@ class ListParentInvoices extends ListRecords
                         ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'paid'))
                         ->badge(fn () => $this->getModel()::where('status', 'paid')->count())
                         ->badgeColor('success'),
-
-                    'all' => Tab::make(__('All'))
-                        ->icon('heroicon-o-squares-2x2')
-                        ->badge(fn () => $this->getModel()::count())
-                        ->badgeColor('gray'),
 
         ];
     }

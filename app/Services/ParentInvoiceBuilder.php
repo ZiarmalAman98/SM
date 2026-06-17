@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ParentGuardian;
 use App\Models\ParentInvoice;
+use App\Models\InventorySale;
 use App\Models\FeeGroupAssignment;
 use App\Models\SchoolClass;
 use App\Models\Student;
@@ -30,7 +31,7 @@ class ParentInvoiceBuilder
         'Hoot' => 'Hoot',
     ];
 
-    public function preview(?int $parentGuardianId, ?string $month, ?int $year): array
+    public function preview(?int $parentGuardianId, ?string $month, ?int $year, array $inventorySaleIds = []): array
     {
         if (! $parentGuardianId || ! $month || ! $year) {
             return $this->emptyPreview();
@@ -48,27 +49,12 @@ class ParentInvoiceBuilder
         }
 
         $items = $this->studentFeeItems($parentGuardian, $month, $year);
-        $previousBalance = $this->previousBalance($parentGuardian->id, $month, $year);
+        $items = array_merge($items, $this->inventorySaleItems($parentGuardian->id, $month, $year, $inventorySaleIds));
+        $previousBalanceDetails = $this->previousBalanceDetails($parentGuardian->id, $month, $year);
+        $previousBalance = $previousBalanceDetails['amount'];
 
         if ($previousBalance > 0) {
-            array_unshift($items, [
-                'student_id' => null,
-                'student_name' => 'Previous unpaid balance',
-                'student_class_id' => null,
-                'class_id' => null,
-                'class_name' => '-',
-                'fee_type_id' => null,
-                'fee_group_assignment_id' => null,
-                'fee_discount_id' => null,
-                'fee_type_name' => 'Previous Balance',
-                'billing_month' => $month,
-                'billing_year' => $year,
-                'description' => "Previous unpaid family balance before {$month} {$year}",
-                'gross_amount' => $previousBalance,
-                'discount_amount' => 0,
-                'amount' => $previousBalance,
-                'is_previous_balance' => true,
-            ]);
+            array_unshift($items, ...array_reverse($previousBalanceDetails['items']));
         }
 
         $subtotal = collect($items)
@@ -105,6 +91,7 @@ class ParentInvoiceBuilder
                 (int) $data['parent_guardian_id'],
                 $data['billing_month'],
                 (int) $data['billing_year'],
+                array_map('intval', $data['inventory_sale_ids'] ?? []),
             );
 
             if (empty($preview['items'])) {
@@ -138,6 +125,7 @@ class ParentInvoiceBuilder
                     'fee_type_id' => $item['fee_type_id'],
                     'fee_group_assignment_id' => $item['fee_group_assignment_id'] ?? null,
                     'fee_discount_id' => $item['fee_discount_id'] ?? null,
+                    'inventory_sale_id' => $item['inventory_sale_id'] ?? null,
                     'billing_month' => $item['billing_month'],
                     'billing_year' => $item['billing_year'],
                     'description' => $item['description'],
@@ -146,6 +134,23 @@ class ParentInvoiceBuilder
                     'amount' => $item['amount'],
                     'is_previous_balance' => $item['is_previous_balance'],
                 ]);
+            }
+
+            if (! empty($data['inventory_sale_ids'])) {
+                InventorySale::query()
+                    ->whereIn('id', array_map('intval', $data['inventory_sale_ids']))
+                    ->where('parent_guardian_id', $data['parent_guardian_id'])
+                    ->whereNull('parent_invoice_id')
+                    ->where('status', '!=', 'cancelled')
+                    ->where('balance', '>', 0)
+                    ->where(function ($query): void {
+                        $query->where('payment_destination', 'unpaid')
+                            ->orWhere('sale_type', 'admission');
+                    })
+                    ->update([
+                        'parent_invoice_id' => $invoice->id,
+                        'payment_destination' => 'parent_invoice',
+                    ]);
             }
 
             return $invoice;
@@ -324,7 +329,103 @@ class ParentInvoiceBuilder
             }
         }
 
-        return array_values($lines);
+        if (! empty($lines)) {
+            return array_values($lines);
+        }
+
+        return $this->studentClassFeeItems($student, $studentClass, $month, $year);
+    }
+
+    private function studentClassFeeItems(User $student, StudentClass $studentClass, string $month, int $year): array
+    {
+        return $studentClass->feeTypes
+            ->map(function ($feeType) use ($student, $studentClass, $month, $year): ?array {
+                $grossAmount = (float) ($feeType->default_amount ?? 0);
+
+                if ($grossAmount <= 0) {
+                    return null;
+                }
+
+                $studentName = trim($student->name . ' ' . $student->last_name);
+                $className = $studentClass->schoolClass?->class_name ?? '-';
+
+                return [
+                    'student_id' => $student->id,
+                    'student_name' => $studentName,
+                    'student_class_id' => $studentClass->id,
+                    'class_id' => $studentClass->class_id,
+                    'class_name' => $className,
+                    'fee_type_id' => $feeType->id,
+                    'fee_group_assignment_id' => null,
+                    'fee_discount_id' => null,
+                    'fee_type_name' => $feeType->name,
+                    'billing_month' => $month,
+                    'billing_year' => $year,
+                    'description' => "{$feeType->name} for {$studentName} ({$className}) - {$month} {$year}",
+                    'gross_amount' => $grossAmount,
+                    'discount_amount' => 0,
+                    'amount' => $grossAmount,
+                    'is_previous_balance' => false,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function inventorySaleItems(int $parentGuardianId, string $month, int $year, array $inventorySaleIds): array
+    {
+        $inventorySaleIds = array_values(array_unique(array_filter(
+            array_map('intval', $inventorySaleIds),
+            fn(int $id): bool => $id > 0,
+        )));
+
+        if (empty($inventorySaleIds)) {
+            return [];
+        }
+
+        return InventorySale::query()
+            ->with(['items.product', 'student'])
+            ->where('parent_guardian_id', $parentGuardianId)
+            ->whereIn('id', $inventorySaleIds)
+            ->whereNull('parent_invoice_id')
+            ->where('status', '!=', 'cancelled')
+            ->where('balance', '>', 0)
+            ->where(function ($query): void {
+                $query->where('payment_destination', 'unpaid')
+                    ->orWhere('sale_type', 'admission');
+            })
+            ->orderBy('sale_date')
+            ->orderBy('id')
+            ->get()
+            ->map(function (InventorySale $sale) use ($month, $year): array {
+                $studentName = trim(($sale->student?->name ?? '') . ' ' . ($sale->student?->last_name ?? ''));
+                $itemSummary = $sale->items
+                    ->map(fn($item) => ($item->product?->name ?? __('Product')) . ' x ' . number_format((float) $item->quantity, 2))
+                    ->implode(', ');
+                $description = __('Inventory Sale :sale_no', ['sale_no' => $sale->sale_no]);
+
+                return [
+                    'student_id' => $sale->student_id,
+                    'student_name' => $studentName !== '' ? $studentName : '-',
+                    'student_class_id' => null,
+                    'class_id' => null,
+                    'class_name' => '-',
+                    'fee_type_id' => null,
+                    'fee_group_assignment_id' => null,
+                    'fee_discount_id' => null,
+                    'inventory_sale_id' => $sale->id,
+                    'fee_type_name' => __('Inventory Sale'),
+                    'billing_month' => $month,
+                    'billing_year' => $year,
+                    'description' => trim($description . ($itemSummary !== '' ? ": {$itemSummary}" : '')),
+                    'gross_amount' => (float) $sale->balance,
+                    'discount_amount' => 0,
+                    'amount' => (float) $sale->balance,
+                    'is_previous_balance' => false,
+                ];
+            })
+            ->all();
     }
 
     private function billableAssignments(?int $studentProfileId, int $classId)
@@ -358,7 +459,7 @@ class ParentInvoiceBuilder
 
     private function billableClass(int $studentId): ?StudentClass
     {
-        return StudentClass::with(['schoolClass'])
+        return StudentClass::with(['schoolClass', 'feeTypes'])
             ->where('student_id', $studentId)
             ->where('status', 'active')
             ->orderByDesc('academic_year')
@@ -366,18 +467,111 @@ class ParentInvoiceBuilder
             ->first();
     }
 
-    private function previousBalance(int $parentGuardianId, string $month, int $year): float
+    private function previousBalanceDetails(int $parentGuardianId, string $month, int $year): array
     {
-        return (float) ParentInvoice::query()
+        $targetMonthNumber = $this->billingMonthNumber($month);
+
+        $priorInvoices = ParentInvoice::query()
             ->where('parent_guardian_id', $parentGuardianId)
-            ->where('balance', '>', 0)
-            ->whereNotIn('status', ['paid', 'cancelled'])
-            ->where(function ($query) use ($month, $year) {
-                $query
-                    ->where('billing_year', '!=', $year)
-                    ->orWhere('billing_month', '!=', $month);
+            ->where('status', '!=', 'cancelled')
+            ->withSum('payments as payments_paid_amount', 'amount')
+            ->with(['items.student', 'items.schoolClass', 'items.feeType'])
+            ->get(['id', 'billing_month', 'billing_year', 'subtotal'])
+            ->filter(function (ParentInvoice $invoice) use ($targetMonthNumber, $year): bool {
+                $invoiceMonthNumber = $this->billingMonthNumber($invoice->billing_month);
+
+                return (int) $invoice->billing_year === $year
+                    && $invoiceMonthNumber < $targetMonthNumber;
             })
-            ->sum('balance');
+            ->sortBy(fn(ParentInvoice $invoice): string => sprintf(
+                '%04d%02d%010d',
+                (int) $invoice->billing_year,
+                $this->billingMonthNumber($invoice->billing_month),
+                (int) $invoice->id,
+            ))
+            ->values();
+
+        $priorMonthlyFees = (float) $priorInvoices->sum('subtotal');
+        $remainingPayments = (float) $priorInvoices->sum('payments_paid_amount');
+        $unpaidPeriods = [];
+        $items = [];
+
+        foreach ($priorInvoices as $invoice) {
+            foreach ($invoice->items->where('is_previous_balance', false)->sortBy('id') as $item) {
+                $lineAmount = (float) $item->amount;
+                $paidForLine = min($remainingPayments, $lineAmount);
+                $remainingPayments -= $paidForLine;
+                $lineBalance = max(0, $lineAmount - $paidForLine);
+
+                if ($lineBalance <= 0) {
+                    continue;
+                }
+
+                $unpaidPeriods[] = "{$invoice->billing_month} {$invoice->billing_year}";
+
+                $studentName = trim(($item->student?->name ?? '') . ' ' . ($item->student?->last_name ?? ''));
+                $feeTypeName = $item->feeType?->name
+                    ?? ($item->inventory_sale_id ? 'Inventory Sale' : 'Previous Balance');
+
+                $items[] = [
+                    'student_id' => $item->student_id,
+                    'student_name' => $studentName !== '' ? $studentName : 'Previous unpaid balance',
+                    'student_class_id' => $item->student_class_id,
+                    'class_id' => $item->class_id,
+                    'class_name' => $item->schoolClass?->class_name ?? '-',
+                    'fee_type_id' => $item->fee_type_id,
+                    'fee_group_assignment_id' => $item->fee_group_assignment_id,
+                    'fee_discount_id' => $item->fee_discount_id,
+                    'inventory_sale_id' => $item->inventory_sale_id,
+                    'fee_type_name' => $feeTypeName,
+                    'billing_month' => $month,
+                    'billing_year' => $year,
+                    'description' => "Previous balance from {$invoice->billing_month} {$invoice->billing_year}: {$item->description}",
+                    'gross_amount' => $lineBalance,
+                    'discount_amount' => 0,
+                    'amount' => $lineBalance,
+                    'is_previous_balance' => true,
+                ];
+            }
+        }
+
+        $amount = max(0, $priorMonthlyFees - (float) $priorInvoices->sum('payments_paid_amount'));
+
+        if ($amount > 0 && empty($items)) {
+            $items[] = [
+                'student_id' => null,
+                'student_name' => 'Previous unpaid balance',
+                'student_class_id' => null,
+                'class_id' => null,
+                'class_name' => '-',
+                'fee_type_id' => null,
+                'fee_group_assignment_id' => null,
+                'fee_discount_id' => null,
+                'fee_type_name' => 'Previous Balance',
+                'billing_month' => $month,
+                'billing_year' => $year,
+                'description' => "Previous unpaid family balance from {$month} {$year}",
+                'gross_amount' => $amount,
+                'discount_amount' => 0,
+                'amount' => $amount,
+                'is_previous_balance' => true,
+            ];
+        }
+
+        return [
+            'amount' => $amount,
+            'items' => $items,
+            'period_label' => $unpaidPeriods
+                ? implode(', ', array_unique($unpaidPeriods))
+                : "{$month} {$year}",
+        ];
+    }
+
+    private function billingMonthNumber(string $month): int
+    {
+        $index = array_search($month, array_keys(self::MONTHS), true);
+
+        return $index === false ? 0 : $index + 1;
     }
 
     private function emptyPreview(): array

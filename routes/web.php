@@ -171,6 +171,10 @@ Route::get('/parent-invoices/{parentInvoice}/print', function (\App\Models\Paren
 Route::get('/parent-invoice-payments/{parentInvoicePayment}/print', function (\App\Models\ParentInvoicePayment $parentInvoicePayment) {
     $parentInvoicePayment->load([
         'invoice.parentGuardian.user',
+        'invoice.items.student',
+        'invoice.items.schoolClass',
+        'invoice.items.feeType',
+        'invoice.payments',
     ]);
 
     $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
@@ -180,6 +184,36 @@ Route::get('/parent-invoice-payments/{parentInvoicePayment}/print', function (\A
         'settings' => $settings,
     ]);
 })->name('parent-invoice-payments.print');
+
+Route::get('/inventory-sales/{inventorySale}/print', function (\App\Models\InventorySale $inventorySale) {
+    $inventorySale->load([
+        'student',
+        'parentGuardian.user',
+        'items.product',
+        'payments',
+    ]);
+
+    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+
+    return view('print.inventory-sale', [
+        'sale' => $inventorySale,
+        'settings' => $settings,
+    ]);
+})->name('inventory-sales.print');
+
+Route::get('/inventory-purchases/{inventoryPurchase}/print', function (\App\Models\InventoryPurchase $inventoryPurchase) {
+    $inventoryPurchase->load([
+        'supplier',
+        'items.product',
+    ]);
+
+    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+
+    return view('print.inventory-purchase', [
+        'purchase' => $inventoryPurchase,
+        'settings' => $settings,
+    ]);
+})->name('inventory-purchases.print');
 
 Route::get('/reports/parent-invoice-payments/print', function (Request $request) {
     $query = \App\Models\ParentInvoicePayment::query()

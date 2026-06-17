@@ -15,6 +15,7 @@ class ParentInvoiceItem extends Model
         'fee_type_id',
         'fee_group_assignment_id',
         'fee_discount_id',
+        'inventory_sale_id',
         'billing_month',
         'billing_year',
         'description',
@@ -64,5 +65,10 @@ class ParentInvoiceItem extends Model
     public function feeDiscount(): BelongsTo
     {
         return $this->belongsTo(FeeDiscount::class);
+    }
+
+    public function inventorySale(): BelongsTo
+    {
+        return $this->belongsTo(InventorySale::class);
     }
 }

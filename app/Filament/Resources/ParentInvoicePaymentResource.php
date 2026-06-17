@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ParentInvoicePaymentResource\Pages;
 use App\Models\ParentInvoice;
 use App\Models\ParentInvoicePayment;
+use App\Services\ParentInvoiceBuilder;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Infolists;
@@ -68,7 +69,7 @@ class ParentInvoicePaymentResource extends Resource
                                 $invoice = ParentInvoice::find($state);
                                 $set('invoice_total', $invoice?->total_amount ?? 0);
                                 $set('already_paid', $invoice?->paid_amount ?? 0);
-                                $set('remaining_balance', $invoice?->balance ?? 0);
+                                $set('remaining_balance', self::familyOutstandingBalance($invoice));
                                 $set('amount', $invoice?->balance ?? 0);
                             }),
 
@@ -89,21 +90,20 @@ class ParentInvoicePaymentResource extends Resource
                             ->default(fn(?ParentInvoicePayment $record) => self::selectedInvoice($record)?->paid_amount ?? 0),
 
                         Forms\Components\TextInput::make('remaining_balance')
-                            ->label(__('Remaining Balance'))
+                            ->label(__('Family Remaining Balance'))
                             ->prefix('AFN ')
                             ->numeric()
                             ->disabled()
                             ->dehydrated(false)
                             ->default(fn(?ParentInvoicePayment $record) => $record
-                                ? ((float) $record->invoice?->balance + (float) $record->amount)
-                                : (self::selectedInvoice($record)?->balance ?? 0)),
+                                ? (self::familyOutstandingBalance($record->invoice) + (float) $record->amount)
+                                : self::familyOutstandingBalance(self::selectedInvoice($record))),
 
                         Forms\Components\TextInput::make('amount')
                             ->label(__('Payment Amount'))
                             ->prefix('AFN ')
                             ->numeric()
-                            ->minValue(0.01)
-                            ->maxValue(fn(Forms\Get $get, ?ParentInvoicePayment $record) => self::maxPayableAmount($get, $record))
+                            ->rules(['numeric', 'min:0.01'])
                             ->default(fn(?ParentInvoicePayment $record) => $record?->amount ?? self::selectedInvoice($record)?->balance ?? 0)
                             ->required(),
 
@@ -354,15 +354,24 @@ class ParentInvoicePaymentResource extends Resource
             ->all();
     }
 
-    private static function maxPayableAmount(Forms\Get $get, ?ParentInvoicePayment $record): float
+    public static function familyOutstandingBalance(?ParentInvoice $invoice): float
     {
-        if ($record) {
-            return (float) $record->invoice?->balance + (float) $record->amount;
+        if (! $invoice) {
+            return 0;
         }
 
-        $invoice = ParentInvoice::find($get('parent_invoice_id'));
+        return (float) ParentInvoice::query()
+            ->where('parent_guardian_id', $invoice->parent_guardian_id)
+            ->where('status', '!=', 'cancelled')
+            ->where('balance', '>', 0)
+            ->sum('balance');
+    }
 
-        return (float) ($invoice?->balance ?? 0);
+    public static function billingMonthNumber(string $month): int
+    {
+        $index = array_search($month, array_keys(ParentInvoiceBuilder::MONTHS), true);
+
+        return $index === false ? 0 : $index + 1;
     }
 
     private static function selectedInvoice(?ParentInvoicePayment $record): ?ParentInvoice

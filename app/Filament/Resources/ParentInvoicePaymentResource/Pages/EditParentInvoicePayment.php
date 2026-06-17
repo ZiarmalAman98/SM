@@ -15,7 +15,6 @@ class EditParentInvoicePayment extends EditRecord
     {
         $invoice = $this->record->invoice;
         $amount = (float) $data['amount'];
-        $maxPayable = (float) $invoice->balance + (float) $this->record->amount;
 
         if ($invoice->status === 'cancelled') {
             throw ValidationException::withMessages([
@@ -23,9 +22,9 @@ class EditParentInvoicePayment extends EditRecord
             ]);
         }
 
-        if ($amount <= 0 || $amount > $maxPayable) {
+        if ($amount <= 0) {
             throw ValidationException::withMessages([
-                'amount' => __('Payment amount must be greater than zero and not more than the remaining balance.'),
+                'amount' => __('Payment amount must be greater than zero.'),
             ]);
         }
 

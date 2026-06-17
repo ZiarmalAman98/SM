@@ -10,6 +10,15 @@
         : asset('schools/cosmos.png');
     $money = fn ($value) => 'AFN ' . number_format((float) $value, 2);
     $paymentDate = $payment->payment_date ? Jalalian::fromDateTime($payment->payment_date)->format('Y/m/d') : '-';
+    $items = $invoice?->items ?? collect();
+    $paidBeforeThisReceipt = $invoice
+        ? (float) $invoice->payments
+            ->where('id', '!=', $payment->id)
+            ->filter(fn ($otherPayment) => $otherPayment->payment_date < $payment->payment_date || ($otherPayment->payment_date == $payment->payment_date && $otherPayment->id < $payment->id))
+            ->sum('amount')
+        : 0;
+    $receiptRemaining = (float) $payment->amount;
+    $priorPaidRemaining = $paidBeforeThisReceipt;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -214,6 +223,31 @@
             border: 1px solid #cbd5e1;
         }
 
+        .line-table th {
+            width: auto;
+            color: #0f172a;
+            font-size: 10px;
+            padding: 6px;
+            text-transform: uppercase;
+        }
+
+        .line-table td {
+            padding: 6px;
+            font-size: 11px;
+            vertical-align: top;
+        }
+
+        .line-table .number {
+            text-align: right;
+            white-space: nowrap;
+            font-weight: 700;
+        }
+
+        .line-table .paid-now {
+            background: #ecfeff;
+            color: #155e75;
+        }
+
         td {
             padding: 9px;
             border: 1px solid #cbd5e1;
@@ -359,7 +393,7 @@
         </section>
 
         <div class="section-title">Invoice And Family Details</div>
-        <table>
+        <table class="details-table">
             <tbody>
                 <tr>
                     <th>Invoice Number</th>
@@ -381,6 +415,54 @@
                     <th>Invoice Status</th>
                     <td>{{ $invoice?->status ?? '-' }}</td>
                 </tr>
+            </tbody>
+        </table>
+
+        <div class="section-title">Payment Breakdown</div>
+        <table class="line-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Student</th>
+                    <th>Item / Fee</th>
+                    <th>Description</th>
+                    <th>Price</th>
+                    <th>Discount</th>
+                    <th>Invoice Amount</th>
+                    <th>Paid This Receipt</th>
+                    <th>Line Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($items as $item)
+                    @php
+                        $lineAmount = (float) $item->amount;
+                        $coveredBefore = min($priorPaidRemaining, $lineAmount);
+                        $priorPaidRemaining -= $coveredBefore;
+                        $lineDueBeforeReceipt = max(0, $lineAmount - $coveredBefore);
+                        $paidThisLine = min($receiptRemaining, $lineDueBeforeReceipt);
+                        $receiptRemaining -= $paidThisLine;
+                        $lineBalance = max(0, $lineDueBeforeReceipt - $paidThisLine);
+                        $student = trim(($item->student?->name ?? '') . ' ' . ($item->student?->last_name ?? ''));
+                        $itemName = $item->feeType?->name
+                            ?? ($item->inventory_sale_id ? 'Inventory Sale' : ($item->is_previous_balance ? 'Previous Balance' : 'Invoice Item'));
+                    @endphp
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $student !== '' ? $student : '-' }}</td>
+                        <td>{{ $itemName }}</td>
+                        <td>{{ $item->description }}</td>
+                        <td class="number">{{ $money($item->gross_amount ?: $item->amount) }}</td>
+                        <td class="number">{{ $money($item->discount_amount) }}</td>
+                        <td class="number">{{ $money($item->amount) }}</td>
+                        <td class="number paid-now">{{ $money($paidThisLine) }}</td>
+                        <td class="number">{{ $money($lineBalance) }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="9">No invoice lines found.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
 

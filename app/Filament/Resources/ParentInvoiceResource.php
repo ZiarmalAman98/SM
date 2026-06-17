@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ParentInvoiceResource\Pages;
+use App\Models\InventorySale;
 use App\Models\ParentGuardian;
 use App\Models\ParentInvoice;
 use App\Services\ParentInvoiceBuilder;
@@ -63,7 +64,10 @@ class ParentInvoiceResource extends Resource
                             ->required()
                             ->live()
                             ->disabled(fn(?ParentInvoice $record) => filled($record))
-                            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => self::refreshPreview($get, $set)),
+                            ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set): void {
+                                $set('inventory_sale_ids', $state ? self::inventorySaleIds((int) $state) : []);
+                                self::refreshPreview($get, $set);
+                            }),
 
                         Forms\Components\Select::make('billing_month')
                             ->label(__('Billing Month'))
@@ -83,6 +87,19 @@ class ParentInvoiceResource extends Resource
                             ->required()
                             ->live(onBlur: true)
                             ->disabled(fn(?ParentInvoice $record) => filled($record))
+                            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => self::refreshPreview($get, $set)),
+
+                        Forms\Components\Select::make('inventory_sale_ids')
+                            ->label(__('Inventory Sales'))
+                            ->options(fn(Forms\Get $get) => self::inventorySaleOptions(
+                                $get('parent_guardian_id') ? (int) $get('parent_guardian_id') : null,
+                            ))
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->live()
+                            ->helperText(__('Select unpaid inventory sales to include in this invoice.'))
+                            ->visible(fn(?ParentInvoice $record) => blank($record))
                             ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set) => self::refreshPreview($get, $set)),
 
                         Forms\Components\DatePicker::make('invoice_date')
@@ -307,7 +324,9 @@ class ParentInvoiceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['parentGuardian.user']))
+            ->modifyQueryUsing(fn(Builder $query) => $query
+                ->with(['parentGuardian.user'])
+                ->withSum('payments as payments_paid_amount', 'amount'))
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')
                     ->label(__('Invoice #'))
@@ -339,7 +358,7 @@ class ParentInvoiceResource extends Resource
                     ->formatStateUsing(fn($state) => number_format((float) $state, 2) . ' AFN')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('paid_amount')
+                Tables\Columns\TextColumn::make('payments_paid_amount')
                     ->label(__('Paid'))
                     ->formatStateUsing(fn($state) => number_format((float) $state, 2) . ' AFN')
                     ->sortable(),
@@ -431,6 +450,7 @@ class ParentInvoiceResource extends Resource
             $get('parent_guardian_id') ? (int) $get('parent_guardian_id') : null,
             $get('billing_month'),
             $get('billing_year') ? (int) $get('billing_year') : null,
+            array_map('intval', $get('inventory_sale_ids') ?: []),
         );
 
         $set('preview_items', $preview['items']);
@@ -499,6 +519,50 @@ class ParentInvoiceResource extends Resource
                 </table>
             </div>
         HTML);
+    }
+
+    private static function inventorySaleOptions(?int $parentGuardianId): array
+    {
+        if (! $parentGuardianId) {
+            return [];
+        }
+
+        return self::unpaidInventorySaleQuery($parentGuardianId)
+            ->with('student')
+            ->orderByDesc('sale_date')
+            ->get()
+            ->mapWithKeys(function (InventorySale $sale): array {
+                $studentName = trim(($sale->student?->name ?? '') . ' ' . ($sale->student?->last_name ?? ''));
+                $customer = $studentName !== '' ? $studentName : ($sale->customer_name ?: __('No customer'));
+
+                return [
+                    $sale->id => "{$sale->sale_no} - {$customer} - " . number_format((float) $sale->balance, 2) . ' AFN',
+                ];
+            })
+            ->all();
+    }
+
+    private static function inventorySaleIds(int $parentGuardianId): array
+    {
+        return self::unpaidInventorySaleQuery($parentGuardianId)
+            ->orderBy('sale_date')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn($id): int => (int) $id)
+            ->all();
+    }
+
+    private static function unpaidInventorySaleQuery(int $parentGuardianId): Builder
+    {
+        return InventorySale::query()
+            ->where('parent_guardian_id', $parentGuardianId)
+            ->whereNull('parent_invoice_id')
+            ->where('status', '!=', 'cancelled')
+            ->where('balance', '>', 0)
+            ->where(function (Builder $query): void {
+                $query->where('payment_destination', 'unpaid')
+                    ->orWhere('sale_type', 'admission');
+            });
     }
 
     private static function paymentHistoryTable(?ParentInvoice $record): HtmlString
