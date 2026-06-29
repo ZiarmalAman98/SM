@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AppSetting;
 use App\Models\FeePayment;
 use App\Models\FeeType;
 use Illuminate\Http\Request;
@@ -39,7 +38,7 @@ class FeePaymentController extends Controller
             ->when($request->filled('to_date'), fn($q) => $q->whereDate('payment_date', '<=', $request->to_date))
             ->get();
 
-        $settings = AppSetting::pluck('value', 'key')->toArray();
+        $settings = appReportSettings();
 
         return view('fee_payments.fee_payment', compact('payments', "settings"));
     }

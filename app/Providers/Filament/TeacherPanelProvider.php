@@ -29,7 +29,8 @@ class TeacherPanelProvider extends PanelProvider
         return $panel
             ->id('teacher')
             ->path('teacher')
-            ->brandLogo(asset('logo.png'))
+            ->brandName(fn (): string => appReportSettings()['app_name'])
+            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
             ->brandLogoHeight('100px')
             ->colors([
                 'primary' => "#24aae1",

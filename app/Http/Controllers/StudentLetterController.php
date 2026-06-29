@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\AppSetting;
 use App\Models\StudentClass;
 use Illuminate\Http\Request;
 
@@ -17,7 +16,7 @@ class StudentLetterController extends Controller
         }
 
         [$studentName, $fatherName] = $this->namesFromUser($student, $request);
-        $settings = AppSetting::pluck('value', 'key')->toArray();
+        $settings = appReportSettings();
 
         return view('letters.appreciation', [
             'studentName' => $studentName,
@@ -37,7 +36,7 @@ class StudentLetterController extends Controller
         }
 
         [$studentName, $fatherName] = $this->namesFromUser($student, $request);
-        $settings = AppSetting::pluck('value', 'key')->toArray();
+        $settings = appReportSettings();
 
         return view('letters.appreciation', [
             'studentName' => $studentName,

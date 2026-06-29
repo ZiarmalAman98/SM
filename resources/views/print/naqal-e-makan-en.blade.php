@@ -193,7 +193,7 @@
                     <h4 class="mb-0" style="margin:0;">{{ $appSettings['app_name'] ?? ($settings['school_name_en'] ?? ($settings['school_name'] ?? 'پاراپامیزاد عالي لیسې')) }}</h4>
                 </div>
             </div>
-            <div class="sub">{{ $settings['school_address_en'] ?? ($settings['school_address'] ?? '') }}</div>
+            <div class="sub">{{ $settings['school_address_line'] ?? '' }}</div>
         </div>
 
         <div class="certificate-title">د لیږد سند</div>

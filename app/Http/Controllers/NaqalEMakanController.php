@@ -5,10 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Branch;
 use App\Models\User;
 use App\Models\SchoolClass;
-use App\Models\AppSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class NaqalEMakanController extends Controller
 {
@@ -28,21 +25,9 @@ class NaqalEMakanController extends Controller
             ->findOrFail($data['student_id']);
 
         // General settings
-        $settings = AppSetting::pluck('value', 'key')->toArray();
-
-        // App settings and dynamic logo
-        $appSettings = AppSetting::where('tab', 'app')->pluck('value', 'key')->toArray();
-        $logoSrc = null;
-        if (!empty($appSettings['app_logo'])) {
-            $appLogo = $appSettings['app_logo'];
-            if (Str::startsWith($appLogo, ['http://', 'https://', 'data:', '/'])) {
-                $logoSrc = $appLogo;
-            } elseif (Storage::disk('public')->exists($appLogo)) {
-                $logoSrc = Storage::url($appLogo);
-            } else {
-                $logoSrc = asset($appLogo);
-            }
-        }
+        $settings = appReportSettings();
+        $appSettings = $settings;
+        $logoSrc = $settings['app_logo_url'];
 
         // Serial number (allow override via request)
         $serialNo = (string) $request->query('no', $student->student->roll_no ?? $student->id);
@@ -70,5 +55,4 @@ class NaqalEMakanController extends Controller
         ]);
     }
 }
-
 

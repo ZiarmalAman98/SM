@@ -26,8 +26,8 @@ class AllReports extends Cluster
             Pages\StudentInformationReport::route('/student-information-report'),
             Pages\FinancialSummaryReport::route('/financial-summary-report'),
             Pages\ExamResultsReport::route('/exam-results-report'),
+            Pages\GenerateExamCard::route('/exam-card'),
         ];
     }
 }
-
 

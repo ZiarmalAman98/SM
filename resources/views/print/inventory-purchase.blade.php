@@ -5,6 +5,11 @@
     $logo = isset($settings['app_logo']) && filled($settings['app_logo'])
         ? asset('storage/' . $settings['app_logo'])
         : asset('schools/cosmos.png');
+    $schoolAddress = $settings['school_address_line'] ?? ($settings['address'] ?? '');
+    $schoolContactLine = implode(' | ', array_filter([
+        $settings['support_phone_display'] ?? '',
+        $settings['support_email'] ?? '',
+    ]));
     $purchaseDate = $purchase->purchase_date ? Jalalian::fromDateTime($purchase->purchase_date)->format('Y/m/d') : '-';
     $money = fn ($value) => 'AFN ' . number_format((float) $value, 2);
 @endphp
@@ -77,6 +82,12 @@
                 <div>
                     <h1>{{ $schoolName }}</h1>
                     <div class="muted">Inventory Purchase Invoice</div>
+                    @if($schoolAddress !== '')
+                        <div class="muted">{{ $schoolAddress }}</div>
+                    @endif
+                    @if($schoolContactLine !== '')
+                        <div class="muted">{{ $schoolContactLine }}</div>
+                    @endif
                 </div>
             </div>
             <div class="title">

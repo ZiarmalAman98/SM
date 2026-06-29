@@ -1043,10 +1043,11 @@
         <a href="https://afghancosmos.com" target="_blank" rel="noopener noreferrer"
             class="mx-auto flex w-fit items-center justify-center gap-3 text-sm transition-opacity hover:opacity-90">
             <span>Made By</span>
-            <img src="{{ asset('schools/cosmos.png') }}" alt="Afghan Cosmos IT And Solutions"
+            @php($settings = appReportSettings())
+            <img src="{{ $settings['app_dark_theme_logo_url'] ?? $settings['app_logo_url'] }}" alt="{{ $settings['app_name'] }} logo"
                 class="h-9 w-9 rounded-full object-contain bg-white p-1">
             <span class="font-semibold text-primary-300">
-                Afghan Cosmos IT &amp; Solutions
+                {{ $settings['app_name'] ?? config('app.name') }}
             </span>
         </a>
     </footer>

@@ -600,6 +600,17 @@
             <p style="text-align: justify; font-size: 9px; line-height: 1.4; margin: 5px 0;">
                 قرار شرح فوق احصاییه خلص جدول نتایج امتحان {{ $examData['examTypeName'] }} شاگردان مکتب خصوصی  از بابت سال {{ $academicYear }} ترتیب و تقدیم است.
             </p>
+            @php
+                $examReportContact = implode(' | ', array_filter([
+                    $settings['school_address_line'] ?? '',
+                    $settings['support_phone_display'] ?? '',
+                ]));
+            @endphp
+            @if($examReportContact !== '')
+                <p style="text-align: center; font-size: 9px; margin: 6px 0 0;">
+                    {{ $examReportContact }}
+                </p>
+            @endif
         </div>
     </div>
 

@@ -641,13 +641,15 @@
 
             <div class="footer-bottom">
                 <p>&copy; {{ date('Y') }} {{ $schoolName }}. All rights reserved.</p>
-                @if(!empty($settings['support_email']) || !empty($settings['support_phone_1']) || !empty($settings['support_phone_2']))
+                @php
+                    $studentInfoContact = implode(' | ', array_filter([
+                        $settings['support_email'] ?? '',
+                        $settings['support_phone_display'] ?? '',
+                    ]));
+                @endphp
+                @if($studentInfoContact !== '')
                     <p>
-                        {{ $settings['support_email'] ?? '' }}
-                        @if(!empty($settings['support_email']) && (!empty($settings['support_phone_1']) || !empty($settings['support_phone_2']))) | @endif
-                        {{ $settings['support_phone_1'] ?? '' }}
-                        @if(!empty($settings['support_phone_1']) && !empty($settings['support_phone_2'])) | @endif
-                        {{ $settings['support_phone_2'] ?? '' }}
+                        {{ $studentInfoContact }}
                     </p>
                 @endif
             </div>

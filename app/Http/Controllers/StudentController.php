@@ -8,6 +8,7 @@ use App\Models\AssignmentSubmission;
 use App\Models\SchoolClass;
 use App\Models\Student;
 use App\Models\User;
+use App\Models\ParentGuardian;
 use Illuminate\Http\Request;
 use App\Models\ExamResult;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,8 @@ class StudentController extends Controller
         $classId = $request->query('class_id');
 
         // Fetch student with their classes (adjust relation names as per your models)
-        $student = User::with('studentClasses')->findOrFail($studentId);
+        $student = User::with(['studentClasses', 'student'])->findOrFail($studentId);
+        $class = SchoolClass::findOrFail($classId);
 
         // Fetch exam results with related subject and exam
         $examResults = ExamResult::with(['subject', 'exam'])
@@ -78,12 +80,20 @@ class StudentController extends Controller
         }
         unset($subject);
 
-        // Determine result status (pass/fail if any subject < 40)
+        $subjectCount = count($groupedResults);
+        $midTotalMax = $subjectCount * 40;
+        $finalTotalMax = $subjectCount * 60;
+        $overallTotalMax = $midTotalMax + $finalTotalMax;
+
+        // Determine result status (fail if total per subject is below 40)
         $resultTotal = $midTotal + $finalTotal;
+        $overallPercentage = $overallTotalMax > 0
+            ? round(($resultTotal / $overallTotalMax) * 100, 2)
+            : 0;
 
         $hasFailedSubject = false;
         foreach ($groupedResults as $subject) {
-            if ($subject['mid_term'] < 40 || $subject['final'] < 40) {
+            if (($subject['total'] ?? 0) < 40) {
                 $hasFailedSubject = true;
                 break;
             }
@@ -91,10 +101,10 @@ class StudentController extends Controller
 
         $status = $hasFailedSubject ? 'ناکام' : 'کامیاب';
 
-        // Dynamic grade calculation from grade_systems table
+        // Dynamic grade calculation from grade_systems table using overall percentage
         $gradeRecord = DB::table('grade_systems')
-            ->where('from', '<=', $resultTotal)
-            ->where('to', '>=', $resultTotal)
+            ->where('from', '<=', $overallPercentage)
+            ->where('to', '>=', $overallPercentage)
             ->first();
 
         $grade = $gradeRecord ? $gradeRecord->title : 'نامعلوم';
@@ -110,17 +120,23 @@ class StudentController extends Controller
             'mid_term' => $midTotal,
             'final' => $finalTotal,
             'total' => $resultTotal,
+            'percentage' => $overallPercentage,
             'status' => $status,
             'grade' => $grade,
         ];
 
         $settings = appReportSettings();
+        $parentGuardian = ParentGuardian::query()
+            ->whereHas('linkedStudents', fn ($query) => $query->where('student_id', $studentId))
+            ->first();
 
         return view('students.exam-results-1', [
             'user' => $student,
+            'class' => $class,
             'subjects' => array_values($groupedResults),
             'attendance' => $attendance,
             'result' => $result,
+            'familyCode' => $parentGuardian?->family_code ?? ($student->student?->admission_no ?? '---'),
             'settings' => $settings,
         ]);
     }

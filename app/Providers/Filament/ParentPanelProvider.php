@@ -27,6 +27,12 @@ class ParentPanelProvider extends PanelProvider
         return $panel
             ->id('parent')
             ->path('parent')
+            ->login()
+            ->passwordReset()
+            ->profile()
+            ->brandName(fn (): string => appReportSettings()['app_name'])
+            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
+            ->brandLogoHeight('100px')
             ->colors([
                 'primary' => Color::Amber,
             ])

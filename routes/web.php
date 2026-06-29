@@ -2,7 +2,6 @@
 
 use App\Models\Income;
 use App\Models\Question;
-use App\Models\AppSetting;
 use App\Models\IncomeSource;
 use Illuminate\Http\Request;
 use App\Models\ClassAttendance;
@@ -19,6 +18,7 @@ use App\Http\Controllers\PayrollPrintController;
 use App\Http\Controllers\BiographyCardController;
 use App\Http\Controllers\StudentLetterController;
 use App\Http\Controllers\BiographyPrintController;
+use App\Http\Controllers\ExamCardController;
 use App\Http\Controllers\ExamResultPrintController;
 use App\Http\Controllers\FormattedResultsController;
 use App\Http\Controllers\ExamResultsReportController;
@@ -107,7 +107,7 @@ Route::get('/exam/print', function (Request $request) {
 
     // dd($groupedQuestions);
 
-    $settings = AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     // Pass data to the view
     return view('exams.print', [
@@ -140,7 +140,7 @@ Route::get('/evaluation-report/print', function (Request $request) {
 
     $responses = $query->orderBy('teacher_id')->get();
 
-    $settings = AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
 
     return view('print.evaluations', [
@@ -160,7 +160,7 @@ Route::get('/parent-invoices/{parentInvoice}/print', function (\App\Models\Paren
         'payments',
     ]);
 
-    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('print.parent-invoice', [
         'invoice' => $parentInvoice,
@@ -177,7 +177,7 @@ Route::get('/parent-invoice-payments/{parentInvoicePayment}/print', function (\A
         'invoice.payments',
     ]);
 
-    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('print.parent-invoice-payment', [
         'payment' => $parentInvoicePayment,
@@ -193,7 +193,7 @@ Route::get('/inventory-sales/{inventorySale}/print', function (\App\Models\Inven
         'payments',
     ]);
 
-    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('print.inventory-sale', [
         'sale' => $inventorySale,
@@ -207,7 +207,7 @@ Route::get('/inventory-purchases/{inventoryPurchase}/print', function (\App\Mode
         'items.product',
     ]);
 
-    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('print.inventory-purchase', [
         'purchase' => $inventoryPurchase,
@@ -229,7 +229,7 @@ Route::get('/reports/parent-invoice-payments/print', function (Request $request)
         ->orderBy('payment_date')
         ->orderBy('receipt_number');
 
-    $settings = \App\Models\AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('print.parent-invoice-payments-report', [
         'payments' => $query->get(),
@@ -278,6 +278,9 @@ Route::get('/financial-summary-report/generate', [FinancialSummaryReportControll
 Route::get('/exam-results-report/generate', [ExamResultsReportController::class, 'generate'])
     ->name('exam-results-report.generate');
 
+Route::get('/exam-card/print', [ExamCardController::class, 'show'])
+    ->name('exam-card.print');
+
 Route::get('/download/formatted-results', [FormattedResultsController::class, 'download'])
     ->name('download.formatted.results');
 
@@ -304,7 +307,7 @@ Route::get('/appreciation-letter', function (Request $request) {
     $studentName = $request->input('student_name', '..........');
     $fatherName = $request->input('father_name', '..........');
 
-    $settings = AppSetting::pluck('value', 'key')->toArray();
+    $settings = appReportSettings();
 
     return view('letters.appreciation', compact('studentName', 'fatherName', 'settings'));
 })->name('appreciation.letter');

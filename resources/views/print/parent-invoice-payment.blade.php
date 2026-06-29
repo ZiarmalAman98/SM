@@ -4,11 +4,12 @@
     $invoice = $payment->invoice;
     $parent = $invoice?->parentGuardian?->user;
     $parentName = trim(($parent?->name ?? '') . ' ' . ($parent?->last_name ?? ''));
-    $schoolName = $settings['app_name'] ?? config('app.name', 'School Management');
-    $logo = isset($settings['app_logo']) && filled($settings['app_logo'])
-        ? asset('storage/' . $settings['app_logo'])
-        : asset('schools/cosmos.png');
+    $schoolName = trim($settings['app_name'] ?? config('app.name', 'School Management'));
+    $logo = $settings['app_logo_url'] ?? asset('schools/cosmos.png');
+    $schoolAddress = $settings['school_address_line'] ?? ($settings['address'] ?? 'Kabul, Afghanistan');
+    $schoolContactLine = $settings['support_phone_display'] ?? '';
     $money = fn ($value) => 'AFN ' . number_format((float) $value, 2);
+    $moneyCell = fn ($value) => 'AFN<br><span class="amount-value">' . number_format((float) $value, 2) . '</span>';
     $paymentDate = $payment->payment_date ? Jalalian::fromDateTime($payment->payment_date)->format('Y/m/d') : '-';
     $items = $invoice?->items ?? collect();
     $paidBeforeThisReceipt = $invoice
@@ -28,6 +29,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $payment->receipt_number }} - Invoice Payment Receipt</title>
     <style>
+        :root {
+            --brand: #c8642c;
+            --brand-dark: #9f4d20;
+            --brand-soft: #fff4ec;
+            --ink: #1f2937;
+            --muted: #6b7280;
+            --line: #e5d4c7;
+            --panel: #fffaf6;
+        }
+
         @page {
             size: A4;
             margin: 14mm;
@@ -39,8 +50,8 @@
 
         body {
             margin: 0;
-            background: #eef2f6;
-            color: #172033;
+            background: linear-gradient(180deg, #f7ede5 0%, #f4f5f7 100%);
+            color: var(--ink);
             font-family: "Segoe UI", Arial, sans-serif;
             font-size: 13px;
             line-height: 1.45;
@@ -57,30 +68,33 @@
             border: 0;
             border-radius: 6px;
             padding: 10px 18px;
-            background: #155e75;
+            background: var(--brand);
             color: #fff;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(200, 100, 44, 0.18);
         }
 
         .toolbar button.secondary {
-            background: #475569;
+            background: #6b7280;
         }
 
         .receipt {
-            width: 190mm;
+            width: min(190mm, calc(100vw - 24px));
             min-height: 250mm;
             margin: 0 auto 24px;
             background: #fff;
             padding: 14mm;
-            border: 1px solid #d8dee8;
-            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            box-shadow: 0 24px 50px rgba(77, 37, 12, 0.12);
         }
 
         .top-line {
-            height: 6px;
+            height: 8px;
             margin: -14mm -14mm 18px;
-            background: #155e75;
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand));
+            border-radius: 18px 18px 0 0;
         }
 
         .header {
@@ -88,7 +102,7 @@
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
             gap: 18px;
-            border-bottom: 2px solid #155e75;
+            border-bottom: 2px solid rgba(200, 100, 44, 0.2);
             padding-bottom: 14px;
         }
 
@@ -106,14 +120,15 @@
 
         .school h1 {
             margin: 0;
-            color: #0f172a;
+            color: #101828;
             font-size: 23px;
             font-weight: 800;
         }
 
         .muted {
-            color: #64748b;
+            color: var(--muted);
             font-size: 12px;
+            overflow-wrap: anywhere;
         }
 
         .title {
@@ -121,7 +136,7 @@
         }
 
         .title .en {
-            color: #155e75;
+            color: var(--brand-dark);
             font-size: 22px;
             font-weight: 800;
             text-transform: uppercase;
@@ -129,7 +144,7 @@
 
         .title .local {
             margin-top: 3px;
-            color: #334155;
+            color: #7c2d12;
             font-size: 15px;
             font-weight: 700;
         }
@@ -142,24 +157,25 @@
         .badge {
             display: inline-block;
             padding: 5px 10px;
-            border: 1px solid #155e75;
+            border: 1px solid #f0b486;
             border-radius: 4px;
-            background: #ecfeff;
-            color: #155e75;
+            background: var(--brand-soft);
+            color: var(--brand-dark);
             font-weight: 800;
+            overflow-wrap: anywhere;
         }
 
         .amount-box {
             margin: 22px 0;
             padding: 18px;
-            border: 2px solid #155e75;
-            border-radius: 8px;
-            background: #f0fdfa;
+            border: 2px solid rgba(200, 100, 44, 0.25);
+            border-radius: 14px;
+            background: linear-gradient(180deg, var(--brand-soft), #fff);
             text-align: center;
         }
 
         .amount-box .label {
-            color: #0f766e;
+            color: var(--brand-dark);
             font-size: 12px;
             font-weight: 800;
             text-transform: uppercase;
@@ -168,8 +184,10 @@
         .amount-box .amount {
             margin-top: 4px;
             color: #0f172a;
-            font-size: 34px;
+            font-size: clamp(26px, 4vw, 34px);
             font-weight: 900;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
         }
 
         .grid {
@@ -180,14 +198,15 @@
         }
 
         .box {
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
             padding: 10px 12px;
-            background: #f8fafc;
+            background: var(--panel);
+            min-width: 0;
         }
 
         .label {
-            color: #64748b;
+            color: var(--muted);
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
@@ -195,14 +214,15 @@
 
         .value {
             margin-top: 4px;
-            color: #0f172a;
+            color: #111827;
             font-size: 14px;
             font-weight: 700;
+            overflow-wrap: anywhere;
         }
 
         .section-title {
             margin: 20px 0 8px;
-            color: #155e75;
+            color: var(--brand-dark);
             font-size: 15px;
             font-weight: 800;
             text-transform: uppercase;
@@ -211,30 +231,71 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         th {
             width: 34%;
-            background: #f1f5f9;
-            color: #334155;
+            background: #fff4ec;
+            color: #7c2d12;
             font-size: 12px;
             text-align: left;
             padding: 9px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--line);
+            overflow-wrap: anywhere;
+        }
+
+        .line-table {
+            table-layout: fixed;
         }
 
         .line-table th {
             width: auto;
-            color: #0f172a;
+            background: var(--brand);
+            color: #fff;
             font-size: 10px;
             padding: 6px;
             text-transform: uppercase;
         }
 
+        .line-table th:nth-child(1),
+        .line-table td:nth-child(1) {
+            width: 5%;
+        }
+
+        .line-table th:nth-child(2),
+        .line-table td:nth-child(2) {
+            width: 13%;
+        }
+
+        .line-table th:nth-child(3),
+        .line-table td:nth-child(3) {
+            width: 13%;
+        }
+
+        .line-table th:nth-child(4),
+        .line-table td:nth-child(4) {
+            width: 21%;
+        }
+
+        .line-table th:nth-child(5),
+        .line-table td:nth-child(5),
+        .line-table th:nth-child(6),
+        .line-table td:nth-child(6),
+        .line-table th:nth-child(7),
+        .line-table td:nth-child(7),
+        .line-table th:nth-child(8),
+        .line-table td:nth-child(8),
+        .line-table th:nth-child(9),
+        .line-table td:nth-child(9) {
+            width: 9.6%;
+        }
+
         .line-table td {
-            padding: 6px;
-            font-size: 11px;
+            padding: 5px;
+            font-size: 10px;
             vertical-align: top;
+            overflow-wrap: anywhere;
         }
 
         .line-table .number {
@@ -243,23 +304,39 @@
             font-weight: 700;
         }
 
+        .line-table .money-cell {
+            white-space: normal;
+            line-height: 1.15;
+            font-size: 9px;
+            font-weight: 800;
+        }
+
+        .line-table .money-cell .amount-value {
+            display: block;
+            margin-top: 2px;
+            font-size: 10px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
         .line-table .paid-now {
-            background: #ecfeff;
-            color: #155e75;
+            background: var(--brand-soft);
+            color: var(--brand-dark);
         }
 
         td {
             padding: 9px;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--line);
         }
 
         .summary {
             margin-top: 16px;
             margin-left: auto;
             width: 86mm;
-            border: 1px solid #155e75;
-            border-radius: 6px;
+            border: 1px solid rgba(200, 100, 44, 0.35);
+            border-radius: 12px;
             overflow: hidden;
+            background: #fff;
         }
 
         .summary-row {
@@ -267,7 +344,7 @@
             justify-content: space-between;
             gap: 12px;
             padding: 9px 12px;
-            border-bottom: 1px solid #dbe4ee;
+            border-bottom: 1px solid var(--line);
         }
 
         .summary-row:last-child {
@@ -275,7 +352,7 @@
         }
 
         .balance {
-            background: #155e75;
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand));
             color: #fff;
             font-size: 15px;
             font-weight: 800;
@@ -283,10 +360,12 @@
 
         .notes {
             min-height: 70px;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
             padding: 10px;
             color: #334155;
+            background: var(--panel);
+            overflow-wrap: anywhere;
         }
 
         .signatures {
@@ -298,21 +377,173 @@
 
         .signature {
             padding-top: 36px;
-            border-top: 1px solid #0f172a;
+            border-top: 1px solid #bca28e;
             text-align: center;
-            color: #475569;
+            color: #5b4b3f;
             font-weight: 700;
         }
 
         .footer {
             margin-top: 24px;
             padding-top: 10px;
-            border-top: 1px solid #cbd5e1;
-            color: #64748b;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
             gap: 16px;
             font-size: 11px;
+            overflow-wrap: anywhere;
+        }
+
+        .footer-copy,
+        .footer-contact {
+            min-width: 0;
+        }
+
+        .footer-copy {
+            display: grid;
+            gap: 4px;
+        }
+
+        .footer-brand {
+            color: var(--brand-dark);
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .footer-contact {
+            text-align: right;
+            display: grid;
+            gap: 4px;
+        }
+
+        @media (max-width: 1100px) {
+            body {
+                font-size: 12px;
+            }
+
+            .receipt {
+                width: calc(100vw - 12px);
+                min-height: auto;
+                padding: 16px;
+                margin-bottom: 12px;
+                border-radius: 14px;
+            }
+
+            .top-line {
+                margin: -16px -16px 14px;
+                border-radius: 14px 14px 0 0;
+            }
+
+            .header,
+            .grid,
+            .signatures,
+            .footer {
+                grid-template-columns: 1fr;
+                display: grid;
+            }
+
+            .summary {
+                width: 100%;
+            }
+
+            .header {
+                text-align: left;
+            }
+
+            .receipt-number {
+                justify-self: start;
+                text-align: left;
+            }
+
+            .footer {
+                text-align: left;
+            }
+
+            .title {
+                text-align: left;
+            }
+
+            .school {
+                align-items: flex-start;
+            }
+
+            .logo {
+                width: 56px;
+                height: 56px;
+            }
+
+            .amount-box {
+                padding: 14px 12px;
+            }
+
+            .amount-box .amount {
+                font-size: clamp(24px, 7vw, 30px);
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+            }
+
+            .details-table th {
+                width: auto;
+                border-bottom: 0;
+                border-radius: 12px 12px 0 0;
+            }
+
+            .details-table td {
+                border-top: 0;
+                margin-bottom: 10px;
+                border-radius: 0 0 12px 12px;
+                background: #fff;
+            }
+
+            .line-table thead {
+                display: none;
+            }
+
+            .line-table tbody tr {
+                margin-bottom: 10px;
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                overflow: hidden;
+                background: #fff;
+            }
+
+            .line-table tbody td {
+                border: 0;
+                border-bottom: 1px solid var(--line);
+                padding: 8px 10px;
+            }
+
+            .line-table tbody td:last-child {
+                border-bottom: 0;
+            }
+
+            .line-table tbody td::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 10px;
+                font-weight: 800;
+                color: var(--brand-dark);
+                text-transform: uppercase;
+                margin-bottom: 4px;
+            }
+
+            .line-table .number {
+                text-align: left;
+                white-space: normal;
+            }
+
+            .footer-contact {
+                text-align: left;
+            }
         }
 
         @media print {
@@ -333,10 +564,39 @@
                 padding: 0;
                 border: 0;
                 box-shadow: none;
+                border-radius: 0;
             }
 
             .top-line {
                 margin: 0 0 18px;
+                border-radius: 0;
+            }
+
+            .amount-box {
+                break-inside: avoid;
+            }
+
+            .line-table th {
+                font-size: 9px;
+                padding: 5px 4px;
+            }
+
+            .line-table td {
+                font-size: 9px;
+                padding: 4px;
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: revert;
+            }
+
+            .line-table tbody td::before {
+                content: none;
             }
         }
     </style>
@@ -448,15 +708,15 @@
                             ?? ($item->inventory_sale_id ? 'Inventory Sale' : ($item->is_previous_balance ? 'Previous Balance' : 'Invoice Item'));
                     @endphp
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $student !== '' ? $student : '-' }}</td>
-                        <td>{{ $itemName }}</td>
-                        <td>{{ $item->description }}</td>
-                        <td class="number">{{ $money($item->gross_amount ?: $item->amount) }}</td>
-                        <td class="number">{{ $money($item->discount_amount) }}</td>
-                        <td class="number">{{ $money($item->amount) }}</td>
-                        <td class="number paid-now">{{ $money($paidThisLine) }}</td>
-                        <td class="number">{{ $money($lineBalance) }}</td>
+                        <td data-label="#">{{ $loop->iteration }}</td>
+                        <td data-label="Student">{{ $student !== '' ? $student : '-' }}</td>
+                        <td data-label="Item / Fee">{{ $itemName }}</td>
+                        <td data-label="Description">{{ $item->description }}</td>
+                        <td data-label="Price" class="number money-cell">{!! $moneyCell($item->gross_amount ?: $item->amount) !!}</td>
+                        <td data-label="Discount" class="number money-cell">{!! $moneyCell($item->discount_amount) !!}</td>
+                        <td data-label="Invoice Amount" class="number money-cell">{!! $moneyCell($item->amount) !!}</td>
+                        <td data-label="Paid This Receipt" class="number money-cell paid-now">{!! $moneyCell($paidThisLine) !!}</td>
+                        <td data-label="Line Balance" class="number money-cell">{!! $moneyCell($lineBalance) !!}</td>
                     </tr>
                 @empty
                     <tr>
@@ -491,8 +751,15 @@
         </section>
 
         <footer class="footer">
-            <span>This receipt confirms payment received for the invoice shown above.</span>
-            <span>{{ $payment->receipt_number }}</span>
+            <div class="footer-copy">
+                <span class="footer-brand">{{ $schoolName }}</span>
+                <span>{{ $schoolAddress }}</span>
+                <span>{{ $schoolContactLine }}</span>
+            </div>
+            <div class="footer-contact">
+                <span>This receipt confirms payment received for the invoice shown above.</span>
+                <span>{{ $payment->receipt_number }}</span>
+            </div>
         </footer>
     </main>
 </body>

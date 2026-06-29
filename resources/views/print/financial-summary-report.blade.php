@@ -842,13 +842,15 @@
         <div class="footer">
             <div class="footer-bottom">
                 <p>&copy; {{ date('Y') }} {{ $schoolName }}. All rights reserved.</p>
-                @if(!empty($settings['support_email']) || !empty($settings['support_phone_1']) || !empty($settings['support_phone_2']))
+                @php
+                    $financialContact = implode(' | ', array_filter([
+                        $settings['support_email'] ?? '',
+                        $settings['support_phone_display'] ?? '',
+                    ]));
+                @endphp
+                @if($financialContact !== '')
                     <p>
-                        {{ $settings['support_email'] ?? '' }}
-                        @if(!empty($settings['support_email']) && (!empty($settings['support_phone_1']) || !empty($settings['support_phone_2']))) | @endif
-                        {{ $settings['support_phone_1'] ?? '' }}
-                        @if(!empty($settings['support_phone_1']) && !empty($settings['support_phone_2'])) | @endif
-                        {{ $settings['support_phone_2'] ?? '' }}
+                        {{ $financialContact }}
                     </p>
                 @endif
             </div>

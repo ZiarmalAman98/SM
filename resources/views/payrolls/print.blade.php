@@ -320,11 +320,16 @@
             </div>
             <div class="company-info">
                 <h1>{{ $settings['app_name'] ?? env('APP_NAME', 'School Management') }}</h1>
-                <p>{{ $settings['address'] ?? env('Address', 'Kabul, afghanistan') }}</p>
-                <p>
-                    Phone: {{ $settings['support_phone_1'] ?? env('Phone', '0787938293') }} |
-                    Email: {{ $settings['support_email'] ?? env('Email', 'info@exmale.com') }}
-                </p>
+                <p>{{ $settings['school_address_line'] ?? ($settings['address'] ?? 'Kabul, Afghanistan') }}</p>
+                @php
+                    $payrollContact = implode(' | ', array_filter([
+                        $settings['support_phone_display'] ?? '',
+                        $settings['support_email'] ?? '',
+                    ]));
+                @endphp
+                @if($payrollContact !== '')
+                    <p>{{ $payrollContact }}</p>
+                @endif
             </div>
         </div>
 
@@ -419,7 +424,7 @@
 
         <div class="footer">
             <p>This is an official payroll document. Please keep for your records.</p>
-            <p>&copy; {{ date('Y') }} {{ env('APP_NAME', 'School Management') }}. All rights reserved.</p>
+            <p>&copy; {{ date('Y') }} {{ $settings['app_name'] ?? env('APP_NAME', 'School Management') }}. All rights reserved.</p>
         </div>
     </div>
 </body>

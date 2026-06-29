@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AppSetting;
 use App\Models\PayrollParent;
 use Illuminate\Http\Request;
 
@@ -12,7 +11,7 @@ class PayrollPrintController extends Controller
     {
         $payrollParent = PayrollParent::with(['payrolls.teacher'])->findOrFail($id);
 
-        $settings = AppSetting::pluck('value', 'key')->toArray();
+        $settings = appReportSettings();
 
         return view('payrolls.print', compact('payrollParent', 'settings'));
     }

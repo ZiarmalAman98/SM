@@ -231,7 +231,7 @@
 
     <div class="footer">
         <div>تهیه شده توسط: {{ auth()->user()->name ?? '—' }}</div>
-        <div class="ltr">{{ $settings['support_phone_1'] ?? '' }}</div>
+        <div class="ltr">{{ $settings['support_phone_display'] ?? '' }}</div>
     </div>
 
     <script>

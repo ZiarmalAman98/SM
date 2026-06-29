@@ -174,7 +174,7 @@
 
             {{-- ✅ School phone number at bottom --}}
             <div class="school-phone" dir="ltr" style="unicode-bidi: embed; text-align: center;">
-                {{ $settings['support_phone_1'] ?? '' }}
+                {{ $settings['support_phone_display'] ?? '' }}
             </div>
         </div>
     </div>

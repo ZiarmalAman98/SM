@@ -15,20 +15,23 @@ class ParentMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (
-            !$request->user() ||
-            ($request->user()->type != 'guardian')
-        ) {
-            if ($request->user()->type == 'staff') {
+        $user = $request->user();
+
+        if (! $user) {
+            abort(403, 'Access denied. Please sign in as parent.');
+        }
+
+        if ($user->type !== 'guardian') {
+            if ($user->type == 'staff') {
                 return $next($request);
             }
-            if ($request->user()->type == 'student') {
+            if ($user->type == 'student') {
                 return redirect('/student');
             }
-            if ($request->user()->type == 'teacher') {
+            if ($user->type == 'teacher') {
                 return redirect('/teacher');
             }
-            if ($request->user()->type == 'admin') {
+            if ($user->type == 'admin') {
                 return redirect('/admin');
             }
             abort(403, 'Access denied. Only parent can access this page.');

@@ -193,7 +193,9 @@ class StudentResource extends Resource
                                         ]),
                                         FileUpload::make('photo_path')
                                             ->label(__('Student Photo'))
+                                            ->disk('public')
                                             ->directory('student_photos')
+                                            ->visibility('public')
                                             ->image()
                                             ->nullable(),
                                     ]),

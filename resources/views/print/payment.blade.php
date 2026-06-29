@@ -100,7 +100,18 @@
                         <!-- School Name -->
                         <div class="school-name">
                             <h2>{{ $settings['app_name'] ?? env('APP_NAME', 'School Management') }}</h2>
-                            <p>Excellence in Education Since </p>
+                            @if(!empty($settings['school_address_line']))
+                                <p>{{ $settings['school_address_line'] }}</p>
+                            @endif
+                            @php
+                                $paymentContact = implode(' | ', array_filter([
+                                    $settings['support_phone_display'] ?? '',
+                                    $settings['support_email'] ?? '',
+                                ]));
+                            @endphp
+                            @if($paymentContact !== '')
+                                <p>{{ $paymentContact }}</p>
+                            @endif
                         </div>
                     </div>
                     <div class="text-right">
