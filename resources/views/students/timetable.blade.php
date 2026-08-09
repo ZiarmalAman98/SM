@@ -94,6 +94,12 @@
             color: #2c3e50;
         }
 
+        .teacher-col {
+            font-size: 13px;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+
         /* Footer Section */
         .report-footer {
             padding: 20px 30px;
@@ -153,6 +159,10 @@
             <div class="report-title">
                 <h1>{{ $class->class_name }} - Timetable</h1>
                 <p>Schedule Overview for the Week</p>
+                <p style="margin-top: 8px;">
+                    <strong>Class Teacher:</strong>
+                    {{ $class->teacher?->name ?? '—' }}
+                </p>
             </div>
             <div class="report-meta">
                 @php
@@ -172,6 +182,7 @@
             <thead>
                 <tr>
                     <th>Time</th>
+                    <th>Teacher</th>
                     @foreach (['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as $day)
                         <th>{{ $day }}</th>
                     @endforeach
@@ -182,6 +193,7 @@
                     @foreach ($subject->schedules as $schedule)
                         <tr>
                             <td class="time-slot">{{ $schedule->start_time }} - {{ $schedule->end_time }}</td>
+                            <td class="teacher-col">{{ $subject->teacher?->name ?? '—' }}</td>
                             @foreach (['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as $day)
                                 <td>
                                     @if ($schedule->day_of_week === $day)

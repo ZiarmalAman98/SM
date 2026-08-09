@@ -87,6 +87,7 @@ public static function getPluralModelLabel(): string
                         ->label(__("Password"))
                         ->columnSpan(2)
                         ->password()
+                        ->revealable()
                         ->dehydrateStateUsing(fn($state) => Hash::make($state))
                         ->dehydrated(fn($state) => filled($state))
                         ->required(fn(string $context): bool => $context === 'create')

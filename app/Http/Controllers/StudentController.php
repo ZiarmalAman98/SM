@@ -169,15 +169,13 @@ class StudentController extends Controller
 
     public function printTimetable($id)
     {
-        $class = SchoolClass::with([
-            'subjects.teacher',
-            'subjects.schedules',
-        ])->findOrFail($id);
+        $class = SchoolClass::with('teacher')->findOrFail($id);
         $subjects = $class->subjects()
             ->with([
+                'teacher',
                 'schedules' => function ($query) {
                     $query->orderBy('day_of_week')->orderBy('start_time');
-                }
+                },
             ])
             ->get();
 

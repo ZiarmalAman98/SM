@@ -33,8 +33,11 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section as ComponentsSection;
 use Filament\Forms\Components\Tabs;
 use Filament\Forms\Components\Tabs\Tab;
+use Filament\Forms\Components\Group;
 use Morilog\Jalali\Jalalian;
 use Filament\Forms\Components\Grid as FormsGrid;
+use App\Models\FeeGroup;
+use App\Models\FeeDiscount;
 
 
 class StudentResource extends Resource
@@ -101,6 +104,7 @@ class StudentResource extends Resource
                                 TextInput::make('password')
                                     ->label(__("Password"))
                                     ->password()
+                                    ->revealable()
                                     ->dehydrateStateUsing(fn($state) => Hash::make($state))
                                     ->dehydrated(fn($state) => filled($state))
                                     ->required(fn(string $context): bool => $context === 'create'),
@@ -261,6 +265,46 @@ class StudentResource extends Resource
                                     ->required(),
                             
                             ])->columns(3)
+                    ]),
+                    Tab::make(__('Fees Assignment'))->schema([
+                        Group::make()
+                            ->relationship('student')
+                            ->schema([
+                                Repeater::make('feeGroupAssignments')
+                                    ->relationship()
+                                    ->label(__('Fee Assignments'))
+                                    ->addActionLabel(__('Add Fee Assignment'))
+                                    ->minItems(0)
+                                    ->defaultItems(0)
+                                    ->collapsible()
+                                    ->schema([
+                                        Select::make('fee_group_id')
+                                            ->label(__('Fee Group'))
+                                            ->options(fn () => FeeGroup::pluck('group_name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->native(false)
+                                            ->required()
+                                            ->placeholder(__('Select fee group')),
+
+                                        DatePicker::make('effective_date')
+                                            ->label(__('Effective Date'))
+                                            ->jalali()
+                                            ->default(now())
+                                            ->placeholder(__('Select effective date')),
+
+                                        Select::make('fee_discount_id')
+                                            ->label(__('Fee Discount'))
+                                            ->options(fn () => FeeDiscount::pluck('discount_name', 'id'))
+                                            ->searchable()
+                                            ->preload()
+                                            ->native(false)
+                                            ->nullable()
+                                            ->placeholder(__('Select fee discount (optional)')),
+                                    ])
+                                    ->columns(3)
+                                    ->columnSpanFull(),
+                            ]),
                     ]),
                 ])->columnSpanFull()
             ]);

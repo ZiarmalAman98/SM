@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BranchResource\Pages;
 use App\Models\Branch;
+use App\Models\User;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
@@ -63,10 +64,13 @@ class BranchResource extends Resource
 
                 Select::make('branch_manager_name')
                     ->label(__('Branch Manager'))
-                    ->relationship('manager', 'name')
+                    ->options(fn () => User::query()
+                        ->where('type', 'staff')
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable()
-                    ->required()
                     ->preload()
+                    ->nullable()
                     ->placeholder(__('Select branch manager')),
 
                 RichEditor::make('branch_description')

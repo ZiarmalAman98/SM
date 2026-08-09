@@ -63,7 +63,8 @@ class ComplaintResource extends Resource
                         'guardian' => __('Guardian'),
                     ])
                     ->placeholder(__('Select complainant type'))
-                    ->reactive()
+                    ->live()
+                    ->afterStateUpdated(fn (callable $set) => $set('complainant_id', null))
                     ->required(),
 
                 Select::make('complainant_id')
@@ -73,26 +74,6 @@ class ComplaintResource extends Resource
                     ->searchable()
                     ->placeholder(__('Select complainant'))
                     ->required(),
-
-                Select::make('correspondent_type')
-                    ->label(__('Correspondent Type'))
-                    ->native(false)
-                    ->options([
-                        'staff' => __('Staff'),
-                        'student' => __('Student'),
-                        'teacher' => __('Teacher'),
-                        'guardian' => __('Guardian'),
-                    ])
-                    ->placeholder(__('Select correspondent type'))
-                    ->nullable(),
-
-                Select::make('correspondent_id')
-                    ->label(__('Correspondent'))
-                    ->native(false)
-                    ->options(fn(Get $get) => self::getUsersByType($get('correspondent_type')))
-                    ->searchable()
-                    ->placeholder(__('Select correspondent'))
-                    ->nullable(),
 
                 TextInput::make('subject')
                     ->label(__('Subject'))
@@ -129,7 +110,7 @@ class ComplaintResource extends Resource
                 ->description(__('Complaint Form'))
                 ->collapsed(false)
                 ->columns(2)
-        ])->columns(3);
+        ]);
     }
 
     public static function table(Table $table): Table

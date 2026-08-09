@@ -96,6 +96,7 @@ class StaffResource extends Resource
                     TextInput::make('password')
                         ->label(__("Password"))
                         ->password()
+                        ->revealable()
                         ->columnSpan(2)
                         ->dehydrateStateUsing(fn($state) => Hash::make($state))
                         ->dehydrated(fn($state) => filled($state))

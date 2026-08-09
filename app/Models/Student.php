@@ -64,6 +64,10 @@ class Student extends Model
         return $this->belongsTo(Section::class);
     }
 
+    public function feeGroupAssignments(): MorphMany
+    {
+        return $this->morphMany(FeeGroupAssignment::class, 'assignable');
+    }
 
     public function submissions(): HasMany
     {
