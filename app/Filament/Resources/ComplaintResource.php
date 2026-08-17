@@ -17,6 +17,7 @@ use Filament\Forms\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables;
 
 class ComplaintResource extends Resource
 {
@@ -197,6 +198,14 @@ class ComplaintResource extends Resource
                     ->placeholder(__('All Complainants')),
             ])
             ->defaultSort('complaint_date', 'desc')
+            ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label(__('Print'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(Complaint $record) => route('complaints.print', $record))
+                    ->openUrlInNewTab(),
+                Tables\Actions\EditAction::make(),
+            ])
             ->emptyStateHeading(__('No complaints found'))
             ->emptyStateDescription(__('Create your first complaint record'))
             ->emptyStateActions([

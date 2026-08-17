@@ -25,7 +25,7 @@ class ListParentInvoices extends ListRecords
                 ->icon('heroicon-o-arrow-path')
                 ->color('success')
                 ->modalHeading(__('Generate All Monthly Invoices'))
-                ->modalDescription(__('This will create missing invoices for every family with active fees. Existing invoices for the selected month and year will be skipped.'))
+                ->modalDescription(__('This will create missing invoices for every family with active fees or unpaid inventory sales. Unpaid sales are also added to existing invoices for the selected month and year.'))
                 ->form([
                     Forms\Components\Select::make('billing_month')
                         ->label(__('Billing Month'))
@@ -52,9 +52,10 @@ class ListParentInvoices extends ListRecords
                     ]);
 
                     $body = __(
-                        'Created: :created | Existing skipped: :existing | No fee skipped: :empty | Failed: :failed',
+                        'Created: :created | Sales added to existing: :updated | Existing skipped: :existing | No fee skipped: :empty | Failed: :failed',
                         [
                             'created' => $summary['created'],
+                            'updated' => $summary['updated'] ?? 0,
                             'existing' => $summary['skipped_existing'],
                             'empty' => $summary['skipped_empty'],
                             'failed' => $summary['failed'],

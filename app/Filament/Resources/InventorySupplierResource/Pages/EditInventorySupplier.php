@@ -13,6 +13,11 @@ class EditInventorySupplier extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('printLedger')
+                ->label(__('Print Ledger'))
+                ->icon('heroicon-o-printer')
+                ->url(fn() => route('inventory-suppliers.ledger', $this->record))
+                ->openUrlInNewTab(),
             Actions\ViewAction::make(),
             Actions\DeleteAction::make(),
         ];

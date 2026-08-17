@@ -269,6 +269,44 @@ Route::get('/biographies/{biography}/print', BiographyPrintController::class)
 Route::get('/biographies/{biography}/card', BiographyCardController::class)
     ->name('biographies.card');
 
+Route::get('/visitor-logs/{visitorLog}/print', function (\App\Models\VisitorLog $visitorLog) {
+    $visitorLog->load('personToMeet.roles');
+
+    $settings = appReportSettings();
+
+    return view('print.visitor-log', [
+        'visitor' => $visitorLog,
+        'settings' => $settings,
+    ]);
+})->name('visitor-logs.print');
+
+Route::get('/complaints/{complaint}/print', function (\App\Models\Complaint $complaint) {
+    $complaint->load(['complainant', 'correspondent']);
+
+    $settings = appReportSettings();
+
+    return view('print.complaint', [
+        'complaint' => $complaint,
+        'settings' => $settings,
+    ]);
+})->name('complaints.print');
+
+Route::get('/inventory-suppliers/{inventorySupplier}/ledger', function (\App\Models\InventorySupplier $inventorySupplier) {
+    $purchases = $inventorySupplier->purchases()
+        ->where('status', '!=', 'cancelled')
+        ->orderBy('purchase_date')
+        ->orderBy('id')
+        ->get();
+
+    $settings = appReportSettings();
+
+    return view('print.supplier-ledger', [
+        'supplier' => $inventorySupplier,
+        'purchases' => $purchases,
+        'settings' => $settings,
+    ]);
+})->name('inventory-suppliers.ledger');
+
 Route::get('/student-information-report/generate', [StudentInformationReportController::class, 'generate'])
     ->name('student-information-report.generate');
 

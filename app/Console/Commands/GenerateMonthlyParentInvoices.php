@@ -44,6 +44,7 @@ class GenerateMonthlyParentInvoices extends Command
         ]);
 
         $this->info("Created: {$summary['created']}");
+        $this->info("Sales added to existing: {$summary['updated']}");
         $this->info("Existing skipped: {$summary['skipped_existing']}");
         $this->info("No active fee skipped: {$summary['skipped_empty']}");
         $this->info("Failed: {$summary['failed']}");

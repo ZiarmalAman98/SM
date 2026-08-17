@@ -10,8 +10,16 @@
         $settings['support_phone_display'] ?? '',
         $settings['support_email'] ?? '',
     ]));
-    $purchaseDate = $purchase->purchase_date ? Jalalian::fromDateTime($purchase->purchase_date)->format('Y/m/d') : '-';
-    $money = fn ($value) => 'AFN ' . number_format((float) $value, 2);
+
+    $complaintDate = $complaint->complaint_date
+        ? Jalalian::fromDateTime($complaint->complaint_date)->format('Y/m/d H:i')
+        : '-';
+
+    $complainantType = $complaint->complainant_type
+        ? __(ucfirst($complaint->complainant_type))
+        : __('Not Specified');
+
+    $statusLabel = $complaint->status ? __($complaint->status) : '-';
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -19,7 +27,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $purchase->purchase_no }} - Purchase Invoice</title>
+    <title>{{ __('Complaint') }} #{{ $complaint->id }}</title>
     <style>
         @page { size: A4; margin: 12mm; }
         * { box-sizing: border-box; }
@@ -39,23 +47,18 @@
         .title .local { margin-top: 3px; color: #334155; font-size: 16px; font-weight: 700; }
         .number-box { justify-self: end; text-align: right; }
         .badge { display: inline-block; padding: 5px 10px; border: 1px solid #155e75; border-radius: 4px; background: #ecfeff; color: #155e75; font-weight: 800; }
-        .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+        .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 18px 0; }
         .box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; background: #f8fafc; }
         .label { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .value { margin-top: 4px; color: #0f172a; font-size: 14px; font-weight: 700; }
         .section-title { margin: 20px 0 8px; color: #155e75; font-size: 15px; font-weight: 800; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #155e75; color: #fff; font-size: 11px; padding: 8px 7px; text-align: left; text-transform: uppercase; }
-        td { border: 1px solid #cbd5e1; padding: 8px 7px; vertical-align: top; }
-        tbody tr:nth-child(even) td { background: #f8fafc; }
-        .number { text-align: right; white-space: nowrap; }
-        .summary { display: grid; grid-template-columns: 1fr 84mm; gap: 16px; margin-top: 16px; align-items: start; }
-        .notes { min-height: 96px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; }
-        .totals { border: 1px solid #155e75; border-radius: 6px; overflow: hidden; }
-        .total-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid #dbe4ee; }
-        .total-row:last-child { border-bottom: 0; }
-        .grand { background: #155e75; color: #fff; font-size: 16px; font-weight: 800; }
-        .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 42px; }
+        .details { width: 100%; border-collapse: collapse; }
+        .details th { width: 32%; background: #f1f5f9; color: #475569; text-align: left; font-size: 12px; padding: 10px 12px; border: 1px solid #cbd5e1; vertical-align: top; }
+        .details td { padding: 10px 12px; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600; }
+        .content-box { min-height: 80px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; background: #f8fafc; }
+        .content-box p { margin: 0 0 8px; }
+        .content-box p:last-child { margin-bottom: 0; }
+        .signatures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 48px; }
         .signature { padding-top: 36px; border-top: 1px solid #0f172a; text-align: center; color: #475569; font-weight: 700; }
         .footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid #cbd5e1; color: #475569; text-align: center; font-size: 12px; line-height: 1.6; }
         .footer .footer-title { color: #155e75; font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
@@ -72,8 +75,8 @@
 
 <body>
     <div class="toolbar">
-        <button onclick="window.print()">Print Purchase</button>
-        <button class="secondary" onclick="window.close()">Close</button>
+        <button onclick="window.print()">{{ __('Print') }}</button>
+        <button class="secondary" onclick="window.close()">{{ __('Close') }}</button>
     </div>
 
     <main class="page">
@@ -87,68 +90,67 @@
                 </div>
             </div>
             <div class="title">
-                <div class="en">Purchase Invoice</div>
-                <div class="local">د خرید بیل</div>
+                <div class="en">{{ __('Complaint') }}</div>
+                <div class="local">{{ __('Complaints') }}</div>
             </div>
             <div class="number-box">
-                <div class="muted">Purchase #</div>
-                <div class="badge">{{ $purchase->purchase_no }}</div>
+                <div class="muted">#</div>
+                <div class="badge">{{ $complaint->id }}</div>
             </div>
         </header>
 
         <section class="meta-grid">
-            <div class="box"><div class="label">Supplier</div><div class="value">{{ $purchase->supplier?->name ?? '-' }}</div></div>
-            <div class="box"><div class="label">Company</div><div class="value">{{ $purchase->supplier?->company_name ?? '-' }}</div></div>
-            <div class="box"><div class="label">Purchase Date</div><div class="value">{{ $purchaseDate }}</div></div>
-            <div class="box"><div class="label">Status</div><div class="value">{{ ucfirst($purchase->status) }}</div></div>
+            <div class="box">
+                <div class="label">{{ __('Date') }}</div>
+                <div class="value">{{ $complaintDate }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Status') }}</div>
+                <div class="value">{{ $statusLabel }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Complainant Type') }}</div>
+                <div class="value">{{ $complainantType }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Complainant') }}</div>
+                <div class="value">{{ $complaint->complainant?->name ?? __('Not Specified') }}</div>
+            </div>
         </section>
 
-        <div class="section-title">Purchase Items</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Product</th>
-                    <th class="number">Qty</th>
-                    <th class="number">Unit Price</th>
-                    <th class="number">Total</th>
-                </tr>
-            </thead>
+        <div class="section-title">{{ __('Complaint Form') }}</div>
+        <table class="details">
             <tbody>
-                @foreach ($purchase->items as $item)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $item->product?->name ?? '-' }}</td>
-                        <td class="number">{{ number_format((float) $item->quantity, 2) }}</td>
-                        <td class="number">{{ $money($item->unit_price) }}</td>
-                        <td class="number">{{ $money($item->total_amount) }}</td>
-                    </tr>
-                @endforeach
+                <tr>
+                    <th>{{ __('Correspondent') }}</th>
+                    <td>{{ $complaint->correspondent?->name ?? __('Not Specified') }}</td>
+                </tr>
+                <tr>
+                    <th>{{ __('Subject') }}</th>
+                    <td>{{ $complaint->subject }}</td>
+                </tr>
             </tbody>
         </table>
 
-        <section class="summary">
-            <div>
-                <div class="section-title">Notes</div>
-                <div class="notes">{{ $purchase->notes ?: '-' }}</div>
-            </div>
-            <div class="totals">
-                <div class="total-row"><span>Subtotal</span><strong>{{ $money($purchase->subtotal) }}</strong></div>
-                <div class="total-row"><span>Discount</span><strong>{{ $money($purchase->discount_amount) }}</strong></div>
-                <div class="total-row"><span>Total</span><strong>{{ $money($purchase->total_amount) }}</strong></div>
-                <div class="total-row"><span>Paid</span><strong>{{ $money($purchase->paid_amount) }}</strong></div>
-                <div class="total-row grand"><span>Balance</span><strong>{{ $money($purchase->balance) }}</strong></div>
-            </div>
-        </section>
+        <div class="section-title">{{ __('Description') }}</div>
+        <div class="content-box">{!! $complaint->description !!}</div>
 
-        <section class="signatures">
-            <div class="signature">Prepared By</div>
-            <div class="signature">Supplier</div>
-            <div class="signature">Approved By</div>
-        </section>
+        <div class="section-title">{{ __('Resolution Notes') }}</div>
+        <div class="content-box">
+            @if(filled($complaint->resolution_notes))
+                {!! $complaint->resolution_notes !!}
+            @else
+                {{ __('No Notes') }}
+            @endif
+        </div>
+
+        <div class="signatures">
+            <div class="signature">{{ __('Complainant') }}</div>
+            <div class="signature">{{ __('Reception') }}</div>
+        </div>
 
         <footer class="footer">
-            <div class="footer-title">{{ __('Inventory Purchase Invoice') }}</div>
+            <div class="footer-title">{{ __('Complaint') }}</div>
             @if($schoolAddress !== '')
                 <div class="footer-address">{{ $schoolAddress }}</div>
             @endif

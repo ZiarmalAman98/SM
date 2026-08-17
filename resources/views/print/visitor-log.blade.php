@@ -10,11 +10,22 @@
         $settings['support_phone_display'] ?? '',
         $settings['support_email'] ?? '',
     ]));
-    $saleDate = $sale->sale_date ? Jalalian::fromDateTime($sale->sale_date)->format('Y/m/d') : '-';
-    $money = fn ($value) => 'AFN ' . number_format((float) $value, 2);
-    $studentName = trim(($sale->student?->name ?? '') . ' ' . ($sale->student?->last_name ?? ''));
-    $parentName = trim(($sale->parentGuardian?->user?->name ?? '') . ' ' . ($sale->parentGuardian?->user?->last_name ?? ''));
-    $customer = $studentName ?: ($parentName ?: ($sale->customer_name ?: '-'));
+
+    $entryTime = $visitor->entry_time
+        ? Jalalian::fromDateTime($visitor->entry_time)->format('Y/m/d H:i')
+        : '-';
+    $exitTime = $visitor->exit_time
+        ? Jalalian::fromDateTime($visitor->exit_time)->format('Y/m/d H:i')
+        : __('Not Checked Out');
+
+    $person = $visitor->personToMeet;
+    $personLabel = $person
+        ? (($person->roles->first()?->name ? ucfirst($person->roles->first()->name) . ': ' : '') . $person->name)
+        : __('Not Specified');
+
+    $photoUrl = filled($visitor->photo_path)
+        ? asset('storage/' . $visitor->photo_path)
+        : null;
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -22,7 +33,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $sale->sale_no }} - Sale Receipt</title>
+    <title>{{ __('Visitor Log') }} #{{ $visitor->id }}</title>
     <style>
         @page { size: A4; margin: 12mm; }
         * { box-sizing: border-box; }
@@ -42,23 +53,18 @@
         .title .local { margin-top: 3px; color: #334155; font-size: 16px; font-weight: 700; }
         .number-box { justify-self: end; text-align: right; }
         .badge { display: inline-block; padding: 5px 10px; border: 1px solid #155e75; border-radius: 4px; background: #ecfeff; color: #155e75; font-weight: 800; }
-        .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 18px 0; }
+        .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 18px 0; }
         .box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; background: #f8fafc; }
         .label { color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .value { margin-top: 4px; color: #0f172a; font-size: 14px; font-weight: 700; }
         .section-title { margin: 20px 0 8px; color: #155e75; font-size: 15px; font-weight: 800; text-transform: uppercase; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #155e75; color: #fff; font-size: 11px; padding: 8px 7px; text-align: left; text-transform: uppercase; }
-        td { border: 1px solid #cbd5e1; padding: 8px 7px; vertical-align: top; }
-        tbody tr:nth-child(even) td { background: #f8fafc; }
-        .number { text-align: right; white-space: nowrap; }
-        .summary { display: grid; grid-template-columns: 1fr 84mm; gap: 16px; margin-top: 16px; align-items: start; }
-        .notes { min-height: 96px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; }
-        .totals { border: 1px solid #155e75; border-radius: 6px; overflow: hidden; }
-        .total-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 12px; border-bottom: 1px solid #dbe4ee; }
-        .total-row:last-child { border-bottom: 0; }
-        .grand { background: #155e75; color: #fff; font-size: 16px; font-weight: 800; }
-        .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 42px; }
+        .details { width: 100%; border-collapse: collapse; }
+        .details th { width: 32%; background: #f1f5f9; color: #475569; text-align: left; font-size: 12px; padding: 10px 12px; border: 1px solid #cbd5e1; }
+        .details td { padding: 10px 12px; border: 1px solid #cbd5e1; color: #0f172a; font-weight: 600; }
+        .photo-wrap { margin-top: 18px; display: flex; gap: 16px; align-items: flex-start; }
+        .photo { width: 140px; height: 140px; object-fit: cover; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; }
+        .notes { min-height: 80px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; background: #f8fafc; white-space: pre-wrap; }
+        .signatures { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 48px; }
         .signature { padding-top: 36px; border-top: 1px solid #0f172a; text-align: center; color: #475569; font-weight: 700; }
         .footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid #cbd5e1; color: #475569; text-align: center; font-size: 12px; line-height: 1.6; }
         .footer .footer-title { color: #155e75; font-size: 13px; font-weight: 800; text-transform: uppercase; margin-bottom: 4px; }
@@ -75,8 +81,8 @@
 
 <body>
     <div class="toolbar">
-        <button onclick="window.print()">Print Receipt</button>
-        <button class="secondary" onclick="window.close()">Close</button>
+        <button onclick="window.print()">{{ __('Print') }}</button>
+        <button class="secondary" onclick="window.close()">{{ __('Close') }}</button>
     </div>
 
     <main class="page">
@@ -90,70 +96,68 @@
                 </div>
             </div>
             <div class="title">
-                <div class="en">Sale Receipt</div>
-                <div class="local">د خرڅلاو رسید</div>
+                <div class="en">{{ __('Visitor Log') }}</div>
+                <div class="local">{{ __('Visitors Logs') }}</div>
             </div>
             <div class="number-box">
-                <div class="muted">Receipt #</div>
-                <div class="badge">{{ $sale->sale_no }}</div>
+                <div class="muted">#</div>
+                <div class="badge">{{ $visitor->id }}</div>
             </div>
         </header>
 
         <section class="meta-grid">
-            <div class="box"><div class="label">Customer</div><div class="value">{{ $customer }}</div></div>
-            <div class="box"><div class="label">Family Code</div><div class="value">{{ $sale->parentGuardian?->family_code ?? '-' }}</div></div>
-            <div class="box"><div class="label">Sale Date</div><div class="value">{{ $saleDate }}</div></div>
-            <div class="box"><div class="label">Status</div><div class="value">{{ ucfirst($sale->status) }}</div></div>
+            <div class="box">
+                <div class="label">{{ __('Visitor Name') }}</div>
+                <div class="value">{{ $visitor->visitor_name }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Phone Number') }}</div>
+                <div class="value">{{ $visitor->phone_number }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Entry Time') }}</div>
+                <div class="value">{{ $entryTime }}</div>
+            </div>
+            <div class="box">
+                <div class="label">{{ __('Exit Time') }}</div>
+                <div class="value">{{ $exitTime }}</div>
+            </div>
         </section>
 
-        <div class="section-title">Sale Items</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Product</th>
-                    <th class="number">Qty</th>
-                    <th class="number">Unit Price</th>
-                    <th class="number">Discount</th>
-                    <th class="number">Total</th>
-                </tr>
-            </thead>
+        <div class="section-title">{{ __('Meeting Details') }}</div>
+        <table class="details">
             <tbody>
-                @foreach ($sale->items as $item)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ $item->product?->name ?? '-' }}</td>
-                        <td class="number">{{ number_format((float) $item->quantity, 2) }}</td>
-                        <td class="number">{{ $money($item->unit_price) }}</td>
-                        <td class="number">{{ $money($item->discount_amount) }}</td>
-                        <td class="number">{{ $money($item->total_amount) }}</td>
-                    </tr>
-                @endforeach
+                <tr>
+                    <th>{{ __('Email') }}</th>
+                    <td>{{ $visitor->email ?: __('No Email') }}</td>
+                </tr>
+                <tr>
+                    <th>{{ __('Person to Meet') }}</th>
+                    <td>{{ $personLabel }}</td>
+                </tr>
+                <tr>
+                    <th>{{ __('Purpose') }}</th>
+                    <td>{{ $visitor->purpose ?: __('Not Specified') }}</td>
+                </tr>
             </tbody>
         </table>
 
-        <section class="summary">
-            <div>
-                <div class="section-title">Notes</div>
-                <div class="notes">{{ $sale->notes ?: '-' }}</div>
+        @if($photoUrl)
+            <div class="photo-wrap">
+                <img class="photo" src="{{ $photoUrl }}" alt="{{ $visitor->visitor_name }}">
             </div>
-            <div class="totals">
-                <div class="total-row"><span>Subtotal</span><strong>{{ $money($sale->subtotal) }}</strong></div>
-                <div class="total-row"><span>Discount</span><strong>{{ $money($sale->discount_amount) }}</strong></div>
-                <div class="total-row"><span>Total</span><strong>{{ $money($sale->total_amount) }}</strong></div>
-                <div class="total-row"><span>Paid</span><strong>{{ $money($sale->paid_amount) }}</strong></div>
-                <div class="total-row grand"><span>Balance</span><strong>{{ $money($sale->balance) }}</strong></div>
-            </div>
-        </section>
+        @endif
 
-        <section class="signatures">
-            <div class="signature">Prepared By</div>
-            <div class="signature">Received By</div>
-            <div class="signature">Approved By</div>
-        </section>
+        <div class="section-title">{{ __('Notes') }}</div>
+        <div class="notes">{{ $visitor->notes ?: __('No Notes') }}</div>
+
+        <div class="signatures">
+            <div class="signature">{{ __('Visitor') }}</div>
+            <div class="signature">{{ __('Reception') }}</div>
+        </div>
 
         <footer class="footer">
-            <div class="footer-title">{{ __('Sale Invoice') }}</div>
+            <div class="footer-title">{{ __('Visitor Log') }}</div>
             @if($schoolAddress !== '')
                 <div class="footer-address">{{ $schoolAddress }}</div>
             @endif

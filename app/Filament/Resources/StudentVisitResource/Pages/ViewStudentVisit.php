@@ -13,6 +13,11 @@ class ViewStudentVisit extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('print')
+                ->label(__('Print'))
+                ->icon('heroicon-o-printer')
+                ->url(fn() => route('visitor-logs.print', $this->record))
+                ->openUrlInNewTab(),
             Actions\EditAction::make(),
         ];
     }

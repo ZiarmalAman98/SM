@@ -31,7 +31,7 @@ class ParentInvoiceBuilder
         'Hoot' => 'Hoot',
     ];
 
-    public function preview(?int $parentGuardianId, ?string $month, ?int $year, array $inventorySaleIds = []): array
+    public function preview(?int $parentGuardianId, ?string $month, ?int $year, ?array $inventorySaleIds = null): array
     {
         if (! $parentGuardianId || ! $month || ! $year) {
             return $this->emptyPreview();
@@ -48,8 +48,9 @@ class ParentInvoiceBuilder
             return $this->emptyPreview();
         }
 
+        $saleIds = $inventorySaleIds ?? $this->unpaidInventorySaleIds($parentGuardian->id);
         $items = $this->studentFeeItems($parentGuardian, $month, $year);
-        $items = array_merge($items, $this->inventorySaleItems($parentGuardian->id, $month, $year, $inventorySaleIds));
+        $items = array_merge($items, $this->inventorySaleItems($parentGuardian->id, $month, $year, $saleIds));
         $previousBalanceDetails = $this->previousBalanceDetails($parentGuardian->id, $month, $year);
         $previousBalance = $previousBalanceDetails['amount'];
 
@@ -87,11 +88,15 @@ class ParentInvoiceBuilder
                 ]);
             }
 
+            $inventorySaleIds = array_key_exists('inventory_sale_ids', $data)
+                ? array_map('intval', $data['inventory_sale_ids'] ?? [])
+                : null;
+
             $preview = $this->preview(
                 (int) $data['parent_guardian_id'],
                 $data['billing_month'],
                 (int) $data['billing_year'],
-                array_map('intval', $data['inventory_sale_ids'] ?? []),
+                $inventorySaleIds,
             );
 
             if (empty($preview['items'])) {
@@ -136,22 +141,7 @@ class ParentInvoiceBuilder
                 ]);
             }
 
-            if (! empty($data['inventory_sale_ids'])) {
-                InventorySale::query()
-                    ->whereIn('id', array_map('intval', $data['inventory_sale_ids']))
-                    ->where('parent_guardian_id', $data['parent_guardian_id'])
-                    ->whereNull('parent_invoice_id')
-                    ->where('status', '!=', 'cancelled')
-                    ->where('balance', '>', 0)
-                    ->where(function ($query): void {
-                        $query->where('payment_destination', 'unpaid')
-                            ->orWhere('sale_type', 'admission');
-                    })
-                    ->update([
-                        'parent_invoice_id' => $invoice->id,
-                        'payment_destination' => 'parent_invoice',
-                    ]);
-            }
+            $this->attachInventorySalesToInvoice($invoice, $preview['items']);
 
             return $invoice;
         });
@@ -169,6 +159,7 @@ class ParentInvoiceBuilder
             'created' => 0,
             'skipped_existing' => 0,
             'skipped_empty' => 0,
+            'updated' => 0,
             'failed' => 0,
             'errors' => [],
         ];
@@ -181,14 +172,26 @@ class ParentInvoiceBuilder
                         ->where('parent_guardian_id', $parentGuardian->id)
                         ->where('billing_year', $year)
                         ->where('billing_month', $month)
+                        ->where('status', '!=', 'cancelled')
                         ->exists();
 
                     if ($exists) {
-                        $summary['skipped_existing']++;
+                        try {
+                            if ($this->attachUnpaidSalesToExistingInvoice($parentGuardian->id, $month, $year) > 0) {
+                                $summary['updated']++;
+                            } else {
+                                $summary['skipped_existing']++;
+                            }
+                        } catch (\Throwable $exception) {
+                            $summary['failed']++;
+                            $summary['errors'][] = "{$parentGuardian->family_code}: {$exception->getMessage()}";
+                        }
+
                         continue;
                     }
 
-                    $preview = $this->preview($parentGuardian->id, $month, $year);
+                    $saleIds = $this->unpaidInventorySaleIds($parentGuardian->id);
+                    $preview = $this->preview($parentGuardian->id, $month, $year, $saleIds);
 
                     if (empty($preview['items'])) {
                         $summary['skipped_empty']++;
@@ -203,6 +206,7 @@ class ParentInvoiceBuilder
                             'invoice_date' => $invoiceDate,
                             'due_date' => $dueDate,
                             'notes' => $notes,
+                            'inventory_sale_ids' => $saleIds,
                         ]);
 
                         $summary['created']++;
@@ -371,6 +375,124 @@ class ParentInvoiceBuilder
             ->filter()
             ->values()
             ->all();
+    }
+
+    private function attachUnpaidSalesToExistingInvoice(int $parentGuardianId, string $month, int $year): int
+    {
+        $invoice = ParentInvoice::query()
+            ->where('parent_guardian_id', $parentGuardianId)
+            ->where('billing_year', $year)
+            ->where('billing_month', $month)
+            ->where('status', '!=', 'cancelled')
+            ->first();
+
+        if (! $invoice) {
+            return 0;
+        }
+
+        $saleIds = $this->unpaidInventorySaleIds($parentGuardianId);
+
+        if (empty($saleIds)) {
+            return 0;
+        }
+
+        $items = $this->inventorySaleItems($parentGuardianId, $month, $year, $saleIds);
+
+        foreach ($items as $item) {
+            $invoice->items()->updateOrCreate(
+                ['inventory_sale_id' => $item['inventory_sale_id']],
+                [
+                    'student_id' => $item['student_id'],
+                    'student_class_id' => $item['student_class_id'],
+                    'class_id' => $item['class_id'],
+                    'fee_type_id' => $item['fee_type_id'],
+                    'fee_group_assignment_id' => $item['fee_group_assignment_id'] ?? null,
+                    'fee_discount_id' => $item['fee_discount_id'] ?? null,
+                    'billing_month' => $item['billing_month'],
+                    'billing_year' => $item['billing_year'],
+                    'description' => $item['description'],
+                    'gross_amount' => $item['gross_amount'] ?? $item['amount'],
+                    'discount_amount' => $item['discount_amount'] ?? 0,
+                    'amount' => $item['amount'],
+                    'is_previous_balance' => false,
+                ],
+            );
+        }
+
+        $this->attachInventorySalesToInvoice($invoice, $items);
+        $this->recalculateInvoiceTotals($invoice->fresh(['items', 'payments']));
+
+        return count($items);
+    }
+
+    private function attachInventorySalesToInvoice(ParentInvoice $invoice, array $items): void
+    {
+        $saleIds = collect($items)
+            ->pluck('inventory_sale_id')
+            ->filter()
+            ->map(fn($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($saleIds)) {
+            return;
+        }
+
+        InventorySale::query()
+            ->whereIn('id', $saleIds)
+            ->where('parent_guardian_id', $invoice->parent_guardian_id)
+            ->whereNull('parent_invoice_id')
+            ->where('status', '!=', 'cancelled')
+            ->update([
+                'parent_invoice_id' => $invoice->id,
+                'payment_destination' => 'parent_invoice',
+            ]);
+    }
+
+    private function unpaidInventorySaleIds(int $parentGuardianId): array
+    {
+        return InventorySale::query()
+            ->where('parent_guardian_id', $parentGuardianId)
+            ->whereNull('parent_invoice_id')
+            ->where('status', '!=', 'cancelled')
+            ->where('balance', '>', 0)
+            ->where(function ($query): void {
+                $query->where('payment_destination', 'unpaid')
+                    ->orWhere('sale_type', 'admission');
+            })
+            ->orderBy('sale_date')
+            ->orderBy('id')
+            ->pluck('id')
+            ->map(fn($id): int => (int) $id)
+            ->all();
+    }
+
+    private function recalculateInvoiceTotals(ParentInvoice $invoice): void
+    {
+        $previousBalance = (float) $invoice->items
+            ->where('is_previous_balance', true)
+            ->sum('amount');
+        $subtotal = (float) $invoice->items
+            ->where('is_previous_balance', false)
+            ->sum('amount');
+        $total = $previousBalance + $subtotal;
+        $paid = (float) $invoice->payments->sum('amount');
+        $balance = max(0, $total - $paid);
+
+        $invoice->forceFill([
+            'previous_balance' => $previousBalance,
+            'subtotal' => $subtotal,
+            'total_amount' => $total,
+            'paid_amount' => $paid,
+            'balance' => $balance,
+            'status' => match (true) {
+                $invoice->status === 'cancelled' => 'cancelled',
+                $paid <= 0 => 'issued',
+                $balance <= 0 => 'paid',
+                default => 'partial',
+            },
+        ])->saveQuietly();
     }
 
     private function inventorySaleItems(int $parentGuardianId, string $month, int $year, array $inventorySaleIds): array

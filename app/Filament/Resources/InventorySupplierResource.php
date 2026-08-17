@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\InventorySupplierResource\Pages;
+use App\Filament\Resources\InventorySupplierResource\RelationManagers;
 use App\Models\InventoryPurchase;
 use App\Models\InventorySupplier;
 use Filament\Forms;
@@ -149,6 +150,11 @@ class InventorySupplierResource extends Resource
                     ->native(false),
             ])
             ->actions([
+                Tables\Actions\Action::make('printLedger')
+                    ->label(__('Print Ledger'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(InventorySupplier $record) => route('inventory-suppliers.ledger', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\Action::make('addPayment')
                     ->label(__('Add Payment'))
                     ->icon('heroicon-o-banknotes')
@@ -213,6 +219,13 @@ class InventorySupplierResource extends Resource
                 Tables\Actions\DeleteBulkAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\PurchasesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

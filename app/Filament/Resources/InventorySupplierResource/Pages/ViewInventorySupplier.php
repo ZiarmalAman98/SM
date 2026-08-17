@@ -16,6 +16,11 @@ class ViewInventorySupplier extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('printLedger')
+                ->label(__('Print Ledger'))
+                ->icon('heroicon-o-printer')
+                ->url(fn() => route('inventory-suppliers.ledger', $this->record))
+                ->openUrlInNewTab(),
             Actions\Action::make('addPayment')
                 ->label(__('Add Payment'))
                 ->icon('heroicon-o-banknotes')

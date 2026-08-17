@@ -150,7 +150,16 @@ class StudentVisitResource extends Resource
                 TextColumn::make('updated_at')->label(__('Updated At'))->dateTime('Y-m-d H:i')->jalaliDateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
-            ->actions([Tables\Actions\ViewAction::make(), Tables\Actions\EditAction::make(), Tables\Actions\DeleteAction::make()])
+            ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label(__('Print'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn(VisitorLog $record) => route('visitor-logs.print', $record))
+                    ->openUrlInNewTab(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
             ->bulkActions([Tables\Actions\DeleteBulkAction::make()])
             ->defaultSort('entry_time', 'desc');
     }
