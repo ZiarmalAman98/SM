@@ -153,7 +153,15 @@ class ContactDetailResource extends Resource
 
                 TernaryFilter::make('is_primary')->label(__('Primary Only'))->placeholder(__('All contacts'))->trueLabel(__('Yes'))->falseLabel(__('No'))->native(false),
             ])
-            ->actions([EditAction::make()->tooltip(__('Edit phone')), DeleteAction::make()->tooltip(__('Delete phone'))])
+            ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label(__('Print'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (ContactDetail $record) => route('contact-details.print', $record))
+                    ->openUrlInNewTab(),
+                EditAction::make()->tooltip(__('Edit phone')),
+                DeleteAction::make()->tooltip(__('Delete phone')),
+            ])
             ->bulkActions([BulkActionGroup::make([DeleteBulkAction::make()->label(__('Delete selected')), ExportBulkAction::make()->label(__('Export selected'))])])
             ->emptyStateHeading(__('No phone numbers found'))
             ->emptyStateDescription(__('Add a new phone number to get started'))

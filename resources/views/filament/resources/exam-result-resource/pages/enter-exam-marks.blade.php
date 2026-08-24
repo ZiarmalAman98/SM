@@ -149,9 +149,9 @@
                         <div class="flex flex-col items-center">
                             <input
                                 type="text"
-                                wire:model.defer="mark_in_words.{{ $student->id }}"
-                                class="w-32 px-3 py-2 text-sm text-center text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-white/20 dark:text-white dark:focus:ring-primary-400 dark:focus:border-primary-400"
-                                placeholder="e.g. Eighty Five"
+                                wire:model.live="mark_in_words.{{ $student->id }}"
+                                class="w-44 px-3 py-2 text-sm text-center text-gray-900 bg-white border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-white/20 dark:text-white dark:focus:ring-primary-400 dark:focus:border-primary-400"
+                                placeholder="e.g. Fifty Five"
                             />
                         </div>
                     </td>

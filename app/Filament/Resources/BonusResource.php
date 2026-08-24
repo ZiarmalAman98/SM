@@ -46,7 +46,11 @@ class BonusResource extends Resource
             Section::make()
                 ->schema([
                     Forms\Components\Select::make('user_id')
-                        ->relationship('user', 'name')
+                        ->relationship(
+                            'user',
+                            'name',
+                            fn (Builder $query) => $query->whereIn('type', ['staff', 'teacher']),
+                        )
                         ->searchable()
                         ->required()
                         ->preload()

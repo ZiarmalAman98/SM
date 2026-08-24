@@ -107,10 +107,10 @@ class EnterExamMarks extends Page
             $this->recital_marks[$student->id] = $existing?->recital_marks ?? null;
             $this->homework_marks[$student->id] = $existing?->homework_marks ?? null;
             $this->class_activity_marks[$student->id] = $existing?->class_activity_marks ?? null;
-            $this->mark_in_words[$student->id] = $existing?->mark_in_words ?? null;
-
-            // Calculate total marks from individual components
             $this->marks[$student->id] = $this->calculateTotalMarks($student->id);
+            $this->mark_in_words[$student->id] = filled($existing?->mark_in_words)
+                ? $existing->mark_in_words
+                : $this->wordsForStudent($student->id);
         }
     }
 
@@ -144,9 +144,23 @@ class EnterExamMarks extends Page
             // Extract student ID from property name (e.g., "written_marks.123" -> "123")
             $studentId = explode('.', $property)[1];
 
-            // Recalculate total marks for this student
             $this->marks[$studentId] = $this->calculateTotalMarks($studentId);
+            $this->mark_in_words[$studentId] = $this->wordsForStudent($studentId);
         }
+    }
+
+    public function wordsForStudent($studentId): string
+    {
+        $hasAnyMark = filled($this->written_marks[$studentId] ?? null)
+            || filled($this->recital_marks[$studentId] ?? null)
+            || filled($this->homework_marks[$studentId] ?? null)
+            || filled($this->class_activity_marks[$studentId] ?? null);
+
+        if (! $hasAnyMark) {
+            return '';
+        }
+
+        return marksToWords($this->marks[$studentId] ?? 0);
     }
 
     public function save(): void
@@ -181,7 +195,10 @@ class EnterExamMarks extends Page
             $recitalScore = (float) ($this->recital_marks[$student->id] ?? null);
             $homeworkScore = (float) ($this->homework_marks[$student->id] ?? null);
             $activityScore = (float) ($this->class_activity_marks[$student->id] ?? null);
-            $markInWords = (string) ($this->mark_in_words[$student->id] ?? null);
+            $markInWords = trim((string) ($this->mark_in_words[$student->id] ?? ''));
+            if ($markInWords === '') {
+                $markInWords = $this->wordsForStudent($student->id);
+            }
 
             // Calculate total marks automatically
             $totalScore = $this->calculateTotalMarks($student->id);

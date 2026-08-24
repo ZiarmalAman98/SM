@@ -151,6 +151,39 @@ Route::get('/evaluation-report/print', function (Request $request) {
 
 Route::get('/payments/print/{payment}', \App\Http\Controllers\PrintPaymentController::class)->name('print.payment');
 
+Route::get('/parent-invoices/print-all', function (Request $request) {
+    $month = (string) $request->query('billing_month');
+    $year = (int) $request->query('billing_year');
+
+    abort_unless(array_key_exists($month, \App\Services\ParentInvoiceBuilder::MONTHS), 404);
+    abort_unless($year >= 1400 && $year <= 1500, 404);
+
+    $invoices = \App\Models\ParentInvoice::query()
+        ->with([
+            'parentGuardian.user',
+            'items.student',
+            'items.schoolClass',
+            'items.feeType',
+            'payments',
+        ])
+        ->where('billing_month', $month)
+        ->where('billing_year', $year)
+        ->where('status', '!=', 'cancelled')
+        ->orderBy('family_code')
+        ->orderBy('invoice_number')
+        ->get();
+
+    $settings = appReportSettings();
+
+    return view('print.parent-invoice', [
+        'invoices' => $invoices,
+        'settings' => $settings,
+        'printAll' => true,
+        'billingMonth' => $month,
+        'billingYear' => $year,
+    ]);
+})->name('parent-invoices.print-all');
+
 Route::get('/parent-invoices/{parentInvoice}/print', function (\App\Models\ParentInvoice $parentInvoice) {
     $parentInvoice->load([
         'parentGuardian.user',
@@ -268,6 +301,47 @@ Route::get('/biographies/{biography}/print', BiographyPrintController::class)
 
 Route::get('/biographies/{biography}/card', BiographyCardController::class)
     ->name('biographies.card');
+
+Route::get('/contact-details/print-all', function () {
+    $contacts = \App\Models\ContactDetail::query()
+        ->with(['user.roles'])
+        ->leftJoin('users', 'users.id', '=', 'contact_details.user_id')
+        ->orderBy('users.name')
+        ->orderBy('users.last_name')
+        ->orderByDesc('contact_details.is_primary')
+        ->orderBy('contact_details.id')
+        ->select('contact_details.*')
+        ->get();
+
+    $settings = appReportSettings();
+
+    return view('print.contact-details-all', [
+        'contacts' => $contacts,
+        'settings' => $settings,
+    ]);
+})->name('contact-details.print-all');
+
+Route::get('/contact-details/{contactDetail}/print', function (\App\Models\ContactDetail $contactDetail) {
+    $contactDetail->load(['user.roles', 'user.contactDetails']);
+
+    $settings = appReportSettings();
+
+    return view('print.contact-detail', [
+        'contact' => $contactDetail,
+        'settings' => $settings,
+    ]);
+})->name('contact-details.print');
+
+Route::get('/advances/{advance}/print', function (\App\Models\Advance $advance) {
+    $advance->setRelation('user', \App\Models\User::find($advance->user_id));
+
+    $settings = appReportSettings();
+
+    return view('print.advance', [
+        'advance' => $advance,
+        'settings' => $settings,
+    ]);
+})->name('advances.print');
 
 Route::get('/visitor-logs/{visitorLog}/print', function (\App\Models\VisitorLog $visitorLog) {
     $visitorLog->load('personToMeet.roles');

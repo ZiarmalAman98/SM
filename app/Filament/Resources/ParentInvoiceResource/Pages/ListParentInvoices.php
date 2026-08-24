@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ParentInvoiceResource\Pages;
 
 use App\Filament\Resources\ParentInvoiceResource;
+use App\Models\ParentInvoice;
 use App\Services\ParentInvoiceBuilder;
 use Filament\Actions;
 use Filament\Forms;
@@ -67,6 +68,55 @@ class ListParentInvoices extends ListRecords
                         ->body($body)
                         ->color($summary['failed'] > 0 ? 'warning' : 'success')
                         ->send();
+                }),
+            Actions\Action::make('print_all')
+                ->label(__('Print All Invoices'))
+                ->icon('heroicon-o-printer')
+                ->color('gray')
+                ->modalHeading(__('Print All Monthly Invoices'))
+                ->modalDescription(__('This will print every generated invoice for the selected month and year. Each invoice prints on its own page, using the same layout as a single invoice.'))
+                ->modalSubmitActionLabel(__('Print All'))
+                ->form([
+                    Forms\Components\Select::make('billing_month')
+                        ->label(__('Billing Month'))
+                        ->options(ParentInvoiceBuilder::MONTHS)
+                        ->default(fn () => data_get($this->tableFilters, 'billing_month.value', $period['month']))
+                        ->native(false)
+                        ->required(),
+                    Forms\Components\TextInput::make('billing_year')
+                        ->label(__('Billing Year'))
+                        ->numeric()
+                        ->minValue(1400)
+                        ->maxValue(1500)
+                        ->default(fn () => data_get($this->tableFilters, 'billing_year.value', $period['year']))
+                        ->required(),
+                ])
+                ->action(function (array $data): void {
+                    $month = $data['billing_month'];
+                    $year = (int) $data['billing_year'];
+
+                    $count = ParentInvoice::query()
+                        ->where('billing_month', $month)
+                        ->where('billing_year', $year)
+                        ->where('status', '!=', 'cancelled')
+                        ->count();
+
+                    if ($count === 0) {
+                        Notification::make()
+                            ->title(__('No invoices found'))
+                            ->body(__('There are no invoices for the selected month and year.'))
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $url = route('parent-invoices.print-all', [
+                        'billing_month' => $month,
+                        'billing_year' => $year,
+                    ]);
+
+                    $this->js('window.open(' . json_encode($url) . ', "_blank")');
                 }),
             Actions\CreateAction::make(),
         ];

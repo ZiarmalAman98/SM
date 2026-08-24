@@ -385,6 +385,24 @@ class ParentInvoiceResource extends Resource
                     ->options(ParentInvoiceBuilder::MONTHS)
                     ->native(false),
 
+                Tables\Filters\SelectFilter::make('billing_year')
+                    ->label(__('Year'))
+                    ->options(function (): array {
+                        $years = ParentInvoice::query()
+                            ->select('billing_year')
+                            ->distinct()
+                            ->orderByDesc('billing_year')
+                            ->pluck('billing_year', 'billing_year')
+                            ->all();
+
+                        $currentYear = (int) Jalalian::now()->getYear();
+                        $years[$currentYear] = $currentYear;
+                        krsort($years);
+
+                        return $years;
+                    })
+                    ->native(false),
+
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('Status'))
                     ->options([

@@ -8,8 +8,7 @@ class Advance extends Model
 {
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id')
-            ->where('type', 'staff');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }
   

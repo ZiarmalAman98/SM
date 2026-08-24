@@ -24,7 +24,11 @@ class Material extends Model
             $this->increment('stock_quantity', $quantity);
         } elseif ($transactionType === 'sell' || $transactionType === 'issue') {
             if ($this->stock_quantity < $quantity) {
-                throw new \Exception('Insufficient stock to complete the transaction.');
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'quantity' => __('Insufficient stock. Available: :available', [
+                        'available' => $this->stock_quantity,
+                    ]),
+                ]);
             }
             $this->decrement('stock_quantity', $quantity);
         }

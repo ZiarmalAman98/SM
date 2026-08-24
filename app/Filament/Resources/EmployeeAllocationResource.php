@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EmployeeAllocationResource\Pages;
 use App\Filament\Resources\EmployeeAllocationResource\RelationManagers;
 use App\Models\EmployeeAllocation;
+use App\Models\Material;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -59,23 +60,72 @@ class EmployeeAllocationResource extends Resource
                     ->label(__('Material'))
                     ->native(false)
                     ->createOptionForm([
-                        // Your MaterialResource form fields here
-                        // Example:
                         Forms\Components\TextInput::make('name')
                             ->label(__('Name'))
                             ->required(),
-                        // Add other material fields as needed
                     ])
                     ->relationship('material', 'name')
+                    ->getOptionLabelFromRecordUsing(fn (Material $record) => "{$record->name} ({$record->stock_quantity})")
                     ->required()
+                    ->live()
                     ->placeholder(__('Select material')),
+
+                Forms\Components\Placeholder::make('available_stock')
+                    ->label(__('Available Stock'))
+                    ->content(function (Forms\Get $get, ?EmployeeAllocation $record): string {
+                        $material = Material::query()->find($get('material_id'));
+
+                        if (! $material) {
+                            return '-';
+                        }
+
+                        $available = (int) $material->stock_quantity;
+
+                        if (
+                            $record
+                            && blank($record->return_date)
+                            && (int) $record->material_id === (int) $get('material_id')
+                        ) {
+                            $available += (int) $record->quantity;
+                        }
+
+                        return (string) $available;
+                    }),
 
                 Forms\Components\TextInput::make('quantity')
                     ->label(__('Quantity'))
                     ->required()
                     ->numeric()
                     ->minValue(1)
-                    ->placeholder(__('Enter quantity')),
+                    ->placeholder(__('Enter quantity'))
+                    ->helperText(__('This quantity will be deducted from material stock until it is returned.'))
+                    ->rules([
+                        function (Forms\Get $get, ?EmployeeAllocation $record) {
+                            return function (string $attribute, $value, $fail) use ($get, $record): void {
+                                $material = Material::query()->find($get('material_id'));
+
+                                if (! $material) {
+                                    return;
+                                }
+
+                                $available = (int) $material->stock_quantity;
+
+                                if (
+                                    $record
+                                    && blank($record->return_date)
+                                    && (int) $record->material_id === (int) $get('material_id')
+                                ) {
+                                    $available += (int) $record->quantity;
+                                }
+
+                                if ((int) $value > $available) {
+                                    $fail(__('Insufficient stock. Available: :available', [
+                                        'available' => $available,
+                                    ]));
+                                }
+                            };
+                        },
+                    ]),
 
                 Forms\Components\DatePicker::make('allocation_date')
                     ->label(__('Allocation Date'))

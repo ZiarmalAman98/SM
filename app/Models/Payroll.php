@@ -14,10 +14,7 @@ class Payroll extends Model
 
     public function teacher()
     {
-        return $this->belongsTo(User::class, 'teacher_id')
-            ->where('type', 'staff')
-            ->orWhere('type', 'teacher');
-           
+        return $this->belongsTo(User::class, 'teacher_id');
     }
 
     public function payment()

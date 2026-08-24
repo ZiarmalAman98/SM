@@ -53,7 +53,11 @@ class AdvanceResource extends Resource
             ->schema([
                 Section::make()->schema([
                     Forms\Components\Select::make('user_id')
-                        ->relationship('user', 'name')
+                        ->relationship(
+                            'user',
+                            'name',
+                            fn (Builder $query) => $query->whereIn('type', ['staff', 'teacher']),
+                        )
                         ->searchable()
                         ->required()
                         ->preload()
@@ -137,6 +141,11 @@ class AdvanceResource extends Resource
                     ->query(fn($query) => $query->where('date', '>=', now()->subMonth())),
             ])
             ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label(__('Print'))
+                    ->icon('heroicon-o-printer')
+                    ->url(fn (Advance $record) => route('advances.print', $record))
+                    ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()
                     ->label(__('Edit')),
                 Tables\Actions\DeleteAction::make()

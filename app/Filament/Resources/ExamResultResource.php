@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Tables\Filters\Filter;
 use Morilog\Jalali\Jalalian;
 
@@ -113,39 +114,50 @@ class ExamResultResource extends Resource
                         ->required()
                         ->placeholder(__('Total Marks e.g. 90'))
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn ($state, Set $set) => $set('mark_in_words', marksToWords($state))),
 
                     Forms\Components\TextInput::make('written_marks')
                         ->label(__('Written Marks'))
                         ->numeric()
                         ->placeholder(__('Written exam marks'))
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn (Get $get, Set $set) => self::syncMarksAndWords($get, $set)),
 
                     Forms\Components\TextInput::make('recital_marks')
                         ->label(__('Recital Marks'))
                         ->numeric()
                         ->placeholder(__('Recital marks'))
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn (Get $get, Set $set) => self::syncMarksAndWords($get, $set)),
 
                     Forms\Components\TextInput::make('homework_marks')
                         ->label(__('Homework Marks'))
                         ->numeric()
                         ->placeholder(__('Homework marks'))
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn (Get $get, Set $set) => self::syncMarksAndWords($get, $set)),
 
                     Forms\Components\TextInput::make('class_activity_marks')
                         ->label(__('Class Activity Marks'))
                         ->numeric()
                         ->placeholder(__('Class activity marks'))
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(fn (Get $get, Set $set) => self::syncMarksAndWords($get, $set)),
 
                     Forms\Components\TextInput::make('mark_in_words')
                         ->label(__('Mark in Words'))
-                        ->placeholder(__('Mark in words (e.g., Eighty Five)'))
+                        ->placeholder(__('Mark in words (e.g., Fifty Five)'))
+                        ->helperText(__('Filled automatically from the total marks. You can still edit it.'))
                         ->maxLength(255),
                 ])
                     ->description(__("Exam Result Form"))
@@ -310,5 +322,27 @@ class ExamResultResource extends Resource
             'enter' => Pages\EnterExamMarks::route('/enter'),
             'view' => Pages\ViewExamResult::route('/{record}'),
         ];
+    }
+
+    public static function syncMarksAndWords(Get $get, Set $set): void
+    {
+        $total = (float) ($get('written_marks') ?? 0)
+            + (float) ($get('recital_marks') ?? 0)
+            + (float) ($get('homework_marks') ?? 0)
+            + (float) ($get('class_activity_marks') ?? 0);
+
+        $hasComponents = filled($get('written_marks'))
+            || filled($get('recital_marks'))
+            || filled($get('homework_marks'))
+            || filled($get('class_activity_marks'));
+
+        if ($hasComponents) {
+            $set('marks', $total);
+            $set('mark_in_words', marksToWords($total));
+
+            return;
+        }
+
+        $set('mark_in_words', marksToWords($get('marks')));
     }
 }
