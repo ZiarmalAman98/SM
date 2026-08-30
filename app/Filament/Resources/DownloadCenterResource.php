@@ -25,6 +25,7 @@ class DownloadCenterResource extends Resource
     protected static ?string $model = DownloadCenter::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-down-tray';
+    protected static ?int $navigationSort = 3;
 
 
 public static function getLabel(): string

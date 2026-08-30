@@ -16,6 +16,7 @@ class EvaluationResponseResource extends Resource
     protected static ?string $model = EvaluationResponse::class;
     // protected static ?string $navigationGroup = 'Evaluations';
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?int $navigationSort = 2;
     public static function getLabel(): string
     {
         return __('Evaluation Response');

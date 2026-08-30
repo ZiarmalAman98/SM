@@ -7,6 +7,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
@@ -66,8 +67,20 @@ class TeacherPanelProvider extends PanelProvider
             )
             ->passwordReset()
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
-            // ->brandName('Afghan Cosmos')
-            // ->brandLogoHeight('4rem')
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Attendance'))
+                    ->icon('heroicon-o-clipboard-document-check'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Homeworks'))
+                    ->icon('heroicon-o-paper-clip'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Academic'))
+                    ->icon('heroicon-o-book-open'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('My Account'))
+                    ->icon('heroicon-o-user'),
+            ])
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
             ->authMiddleware([

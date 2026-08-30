@@ -43,10 +43,10 @@ use App\Models\FeeDiscount;
 class StudentResource extends Resource
 {
     protected static ?string $model = User::class;
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Student Management');
     }
 
     public static function getNavigationLabel(): string

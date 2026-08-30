@@ -21,7 +21,7 @@ class FeeDiscountResource extends Resource
     protected static ?string $model = FeeDiscount::class;
     protected static ?string $navigationIcon = 'heroicon-o-percent-badge';
     // protected static ?string $navigationGroup = 'Default Data';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     public static function getLabel(): string
     {

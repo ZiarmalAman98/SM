@@ -7,6 +7,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -61,6 +62,15 @@ class ParentPanelProvider extends PanelProvider
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Family'))
+                    ->icon('heroicon-o-users'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Discipline'))
+                    ->icon('heroicon-o-exclamation-triangle'),
+            ])
+            ->sidebarCollapsibleOnDesktop()
             ->authMiddleware([
                 Authenticate::class,
                 ParentMiddleware::class

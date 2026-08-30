@@ -21,6 +21,7 @@ class AdvanceResource extends Resource
 {
     protected static ?string $model = Advance::class;
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static ?int $navigationSort = 4;
 
     public static function getNavigationGroup(): string
     {

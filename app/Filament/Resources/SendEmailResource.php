@@ -16,6 +16,7 @@ class SendEmailResource extends Resource
 {
     protected static ?string $model = SendEmail::class;
     protected static ?string $navigationIcon = 'heroicon-o-paper-airplane';
+    protected static ?int $navigationSort = 1;
 
     /* ─────────────────────── Navigation labels ─────────────────────── */
 

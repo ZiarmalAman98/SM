@@ -17,6 +17,7 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class IncomeResource extends Resource
 {
     protected static ?string $model = Income::class;
+    protected static ?int $navigationSort = 2;
 
     public static function getLabel(): string
     {

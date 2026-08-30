@@ -19,6 +19,7 @@ class BonusResource extends Resource
 {
     protected static ?string $model = Bonus::class;
     protected static ?string $navigationIcon = 'heroicon-o-trophy';
+    protected static ?int $navigationSort = 3;
 
     public static function getModelLabel(): string
     {

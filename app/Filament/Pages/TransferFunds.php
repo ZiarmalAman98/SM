@@ -1,9 +1,10 @@
 <?php
-  
+
 namespace App\Filament\Pages;
 
 use App\Filament\Actions\ProcessDailyTransferAction;
-use App\Models\Transaction;
+use App\Filament\Widgets\DailyBalanceWidget;
+use App\Services\DailyBalanceService;
 use Filament\Pages\Page;
 
 class TransferFunds extends Page
@@ -14,7 +15,17 @@ class TransferFunds extends Page
 
     public static function getNavigationGroup(): string
     {
-        return 'Daily Balance';
+        return __('Daily Balance');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Transfer Funds');
+    }
+
+    public function getTitle(): string
+    {
+        return __('Transfer Funds');
     }
 
     protected function getHeaderActions(): array
@@ -24,18 +35,21 @@ class TransferFunds extends Page
         ];
     }
 
-    protected function getTodayIncome(): float
+    protected function getHeaderWidgets(): array
     {
-        return (float) Transaction::where('type', 'income')
-            ->whereDate('created_at', today())
-            ->whereNull('daily_transfer_id')
-            ->sum('amount');
+        return [
+            DailyBalanceWidget::class,
+        ];
     }
 
     protected function getViewData(): array
     {
+        $summary = app(DailyBalanceService::class)->todaySummary();
+
         return [
-            'todayIncome' => $this->getTodayIncome(),
+            'todayIncome' => $summary['income'],
+            'todayExpense' => $summary['expense'],
+            'todayNet' => $summary['net'],
             'destination' => config('app.default_transfer_destination'),
         ];
     }

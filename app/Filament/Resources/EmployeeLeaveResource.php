@@ -22,7 +22,7 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class EmployeeLeaveResource extends Resource
 {
     protected static ?string $model = EmployeeLeave::class;
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
     public static function getLabel(): string
     {
         return __('Employee Leave');
@@ -45,7 +45,7 @@ class EmployeeLeaveResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Staff Management');
     }
 
     public static function getNavigationBadge(): ?string

@@ -18,6 +18,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 class HomeworkSubmissionResource extends Resource
 {
     protected static ?string $model = AssignmentSubmission::class;
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?int $navigationSort = 2;
 
     public static function getModelLabel(): string
     {

@@ -20,6 +20,7 @@ class QuestionDifficultyResource extends Resource
     protected static ?string $model = QuestionDifficulty::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?int $navigationSort = 2;
 public static function getNavigationLabel(): string
 {
     return __('Questions Difficulties');

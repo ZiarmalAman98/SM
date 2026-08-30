@@ -25,10 +25,11 @@ class ParentGuardianResource extends Resource
 {
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?int $navigationSort = 3;
 
   public static function getNavigationGroup(): string
 {
-    return __('Account Management');
+        return __('Student Management');
 }
 
 public static function getNavigationLabel(): string

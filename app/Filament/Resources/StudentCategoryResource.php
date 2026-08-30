@@ -16,10 +16,13 @@ use Filament\Tables\Table;
 class StudentCategoryResource extends Resource
 {
     protected static ?string $model = StudentCategory::class;
+    protected static ?string $navigationIcon = 'heroicon-o-tag';
+    protected static ?int $navigationSort = 1;
+
     public static function getNavigationGroup(): string
-{
-    return __('Account Management');
-}
+    {
+        return __('Student Management');
+    }
 
 public static function getNavigationLabel(): string
 {

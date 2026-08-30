@@ -18,6 +18,7 @@ class EvaluationQuestionResource extends Resource
 {
     protected static ?string $model = EvaluationQuestion::class;
     protected static ?string $navigationIcon = 'heroicon-o-question-mark-circle';
+    protected static ?int $navigationSort = 1;
 
     public static function getLabel(): string
     {

@@ -25,6 +25,12 @@ class StudentClassResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
     protected static ?string $navigationLabel = ('My Classes');
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Academic');
+    }
 
     public static function getLabel(): string
     {

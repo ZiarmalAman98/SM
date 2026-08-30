@@ -20,6 +20,7 @@ class ExamResource extends Resource
 {
     protected static ?string $model = Exam::class;
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
+    protected static ?int $navigationSort = 2;
 
     public static function getLabel(): string
     {

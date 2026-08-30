@@ -78,23 +78,26 @@ class StudentPanelProvider extends PanelProvider
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
             ->navigationGroups([
-
                 NavigationGroup::make()
-                    ->label(fn(): string => __('Attendance'))
+                    ->label(fn (): string => __('Academic'))
+                    ->icon('heroicon-o-book-open'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Attendance'))
                     ->icon('heroicon-o-document-check')
                     ->collapsed(),
-
-            NavigationGroup::make()
-                    ->label(fn(): string => __('Student Leave'))
-                    ->icon('heroicon-o-book-open')
-                    ->collapsed(),
-
-
                 NavigationGroup::make()
-                    ->label(fn(): string => __('Homeworks'))
-                    ->icon('heroicon-o-paper-clip')
+                    ->label(fn (): string => __('Student Leave'))
+                    ->icon('heroicon-o-arrow-right-start-on-rectangle')
                     ->collapsed(),
-
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Homeworks'))
+                    ->icon('heroicon-o-paper-clip'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Finance'))
+                    ->icon('heroicon-o-banknotes'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Reception'))
+                    ->icon('heroicon-o-inbox'),
             ])
             ->spa()
             ->databaseNotifications()

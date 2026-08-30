@@ -15,6 +15,12 @@ class EmployeeSalaryResource extends Resource
 {
     protected static ?string $model = Payment::class;
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('My Account');
+    }
 
     public static function getPluralModelLabel(): string
     {

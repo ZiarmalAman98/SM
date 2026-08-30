@@ -18,6 +18,8 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class EmployeeAllocationResource extends Resource
 {
     protected static ?string $model = EmployeeAllocation::class;
+    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static ?int $navigationSort = 4;
 
     public static function getLabel(): string
     {
@@ -41,7 +43,12 @@ class EmployeeAllocationResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('Inventory Management');
+        return __('Employee Allocations');
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 4;
     }
 
     public static function form(Form $form): Form

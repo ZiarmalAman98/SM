@@ -34,7 +34,7 @@ class StaffResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 1; // staff before teachers and students
 
     public static function getLabel(): string
     {
@@ -58,7 +58,7 @@ class StaffResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Staff Management');
     }
 
     public static function form(Forms\Form $form): Forms\Form

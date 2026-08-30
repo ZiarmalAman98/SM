@@ -20,7 +20,7 @@ class StudentClassResource extends Resource
     protected static ?int $navigationSort = 4;
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Student Management');
     }
 
     public static function getNavigationLabel(): string

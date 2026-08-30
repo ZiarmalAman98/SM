@@ -2,52 +2,40 @@
 
 namespace App\Console\Commands;
 
-use App\Models\DailyTransfer;
-use App\Models\Transaction;
+use App\Models\User;
+use App\Services\DailyBalanceService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class ProcessDailyTransfer extends Command
 {
-    protected $signature = 'transfer:daily';
-    protected $description = 'Transfer daily income to destination account';
+    protected $signature = 'transfer:daily {--user= : Destination staff user id}';
 
-    public function handle()
+    protected $description = 'Transfer today remaining cash (income + invoice payments − expenses) to a staff account';
+
+    public function handle(DailyBalanceService $dailyBalance): int
     {
-        // Calculate today's total income (excluding any transfers)
-        $totalIncome = Transaction::where('type', 'income')
-            ->whereDate('created_at', today())
-            ->whereNull('daily_transfer_id')
-            ->sum('amount');
+        $userId = $this->option('user')
+            ? (int) $this->option('user')
+            : (int) User::query()->where('type', 'staff')->value('id');
 
-        if ($totalIncome > 0) {
-            DB::transaction(function () use ($totalIncome) {
-                // Create the daily transfer record
-                $transfer = DailyTransfer::create([
-                    'amount' => $totalIncome,
-                    'destination' => config('app.default_transfer_destination'), // Set this in config
-                    'reference' => 'DAILY-' . now()->format('Ymd'),
-                    'transfer_date' => now(),
-                ]);
+        if ($userId <= 0) {
+            $this->error('No destination staff user found. Pass --user=ID.');
 
-                // Create the transfer-out transaction
-                Transaction::create([
-                    'amount' => $totalIncome,
-                    'type' => 'transfer_out',
-                    'description' => 'Daily transfer to ' . $transfer->destination,
-                    'daily_transfer_id' => $transfer->id,
-                ]);
-
-                // Link all today's income transactions to this transfer
-                Transaction::where('type', 'income')
-                    ->whereDate('created_at', today())
-                    ->whereNull('daily_transfer_id')
-                    ->update(['daily_transfer_id' => $transfer->id]);
-            });
-
-            $this->info('Successfully transferred ؋' . number_format($totalIncome, 2));
-        } else {
-            $this->info('No income to transfer today.');
+            return self::FAILURE;
         }
+
+        $summary = $dailyBalance->todaySummary();
+
+        if ($summary['net'] <= 0) {
+            $this->info('No cash remaining to transfer today.');
+
+            return self::SUCCESS;
+        }
+
+        $transfer = $dailyBalance->processTransfer($userId);
+
+        $this->info('Transferred AFN '.number_format((float) $transfer->amount, 2).' ('.$transfer->reference.')');
+
+        return self::SUCCESS;
     }
 }

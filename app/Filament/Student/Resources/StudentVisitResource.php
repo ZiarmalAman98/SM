@@ -14,6 +14,12 @@ class StudentVisitResource extends Resource
     protected static ?string $model = VisitorLog::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-eye';
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Reception');
+    }
 
     public static function getLabel(): string
     {

@@ -16,18 +16,23 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class StockTypeResource extends Resource
 {
     protected static ?string $model = StockType::class;
+    protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
+    protected static ?int $navigationSort = 1;
 
-    // protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    public static function getNavigationGroup(): string
+    {
+        return __('Employee Allocations');
+    }
 
-  public static function getNavigationGroup(): string
-{
-    return __('Inventory Management');
-}
+    public static function getNavigationSort(): ?int
+    {
+        return 1;
+    }
 
-public static function getNavigationLabel(): string
-{
-    return __('Stock Types');
-}
+    public static function getNavigationLabel(): string
+    {
+        return __('Stock Types');
+    }
 
 public static function getModelLabel(): string
 {
@@ -108,11 +113,5 @@ public static function getLabel(): string
             'view' => Pages\ViewStockType::route('/{record}'),
             'edit' => Pages\EditStockType::route('/{record}/edit'),
         ];
-    }
-
-    
-    public static function getNavigationSort(): ?int
-    {
-        return 2;
     }
 }

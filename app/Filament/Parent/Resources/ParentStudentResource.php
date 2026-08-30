@@ -20,6 +20,12 @@ class ParentStudentResource extends Resource
     protected static ?string $modelLabel = "My Children";
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('Family');
+    }
 
 
     public static function table(Table $table): Table

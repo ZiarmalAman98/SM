@@ -9,6 +9,7 @@ use Filament\PanelProvider;
 use App\Filament\Pages\Chats;
 use Filament\Support\Colors\Color;
 use App\Filament\Pages\TransferFunds;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\View\PanelsRenderHook;
 use App\Http\Middleware\AdminMiddleware;
@@ -86,14 +87,80 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
-            // ->navigationItems([
-            //     NavigationItem::make('Daily Transfer')
-            //         ->url(fn(): string => TransferFunds::getUrl())
-            //         ->icon('heroicon-o-banknotes')
-            //         ->sort(3)
-            //         ->visible(fn(): bool => auth()->user()->can('process_transfer')),
-            // ])
-
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label(fn (): string => __('System'))
+                    ->icon('heroicon-o-building-office'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Staff Management'))
+                    ->icon('heroicon-o-briefcase'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Default Data'))
+                    ->icon('heroicon-o-cube'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Student Management'))
+                    ->icon('heroicon-o-academic-cap'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Reception'))
+                    ->icon('heroicon-o-inbox'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Attendance'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Examinations'))
+                    ->icon('heroicon-o-academic-cap')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Assignments'))
+                    ->icon('heroicon-o-document-text')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Calendar'))
+                    ->icon('heroicon-o-calendar-days')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Evaluations'))
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Question Bank'))
+                    ->icon('heroicon-o-question-mark-circle')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Library Management'))
+                    ->icon('heroicon-o-book-open')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Inventory'))
+                    ->icon('heroicon-o-archive-box')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Employee Allocations'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Finance'))
+                    ->icon('heroicon-o-banknotes')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Payroll'))
+                    ->icon('heroicon-o-currency-dollar')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Daily Balance'))
+                    ->icon('heroicon-o-arrows-right-left')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Admin'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsed(),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Reports'))
+                    ->icon('heroicon-o-chart-pie')
+                    ->collapsed(),
+            ])
+            ->sidebarCollapsibleOnDesktop()
             ->authMiddleware([
                 Authenticate::class,
                 AdminMiddleware::class,

@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 class IncomeSourceResource extends Resource
 {
     protected static ?string $model = IncomeSource::class;
+    protected static ?int $navigationSort = 1;
 
   public static function getNavigationGroup(): string
 {

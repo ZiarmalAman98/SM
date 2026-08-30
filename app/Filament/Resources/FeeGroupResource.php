@@ -21,7 +21,7 @@ class FeeGroupResource extends Resource
     protected static ?string $model = FeeGroup::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-group';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
 
     public static function getLabel(): string
     {

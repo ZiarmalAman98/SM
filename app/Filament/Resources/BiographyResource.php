@@ -17,10 +17,10 @@ class BiographyResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-circle';
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Staff Management');
     }
     protected static ?string $navigationLabel = 'Biographies';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

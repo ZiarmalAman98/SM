@@ -17,31 +17,38 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class MaterialResource extends Resource
 {
     protected static ?string $model = Material::class;
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): string
+    {
+        return __('Employee Allocations');
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 2;
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Materials');
+    }
 
     public static function getNavigationBadge(): ?string
-{
-    return static::getModel()::count();
-}
+    {
+        return static::getModel()::count();
+    }
 
-public static function getModelLabel(): string
-{
-    return __('Material');
-}
+    public static function getModelLabel(): string
+    {
+        return __('Material');
+    }
 
-public static function getPluralModelLabel(): string
-{
-    return __('Materials');
-}
-
-public static function getNavigationGroup(): string
-{
-    return __('Inventory Management');
-}
-
-public static function getNavigationLabel(): string
-{
-    return __('Materials');
-}
+    public static function getPluralModelLabel(): string
+    {
+        return __('Materials');
+    }
 
     public static function form(Form $form): Form
     {

@@ -22,8 +22,12 @@ class TeacherPlanResource extends Resource
     protected static ?string $model = TeacherPlan::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
-    protected static ?string $navigationGroup = 'Academic';
-    protected static ?int    $navigationSort  = 30;
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): string
+    {
+        return __('Academic');
+    }
 
     public static function getEloquentQuery(): Builder
     {

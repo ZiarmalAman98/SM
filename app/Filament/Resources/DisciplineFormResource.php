@@ -39,9 +39,11 @@ class DisciplineFormResource extends Resource
         return __('Disciplinary Forms');
     }
 
+    protected static ?int $navigationSort = 5;
+
     public static function getNavigationGroup(): string
     {
-        return __('Payroll');
+        return __('Student Management');
     }
     public static function form(Forms\Form $form): Forms\Form
     {

@@ -18,6 +18,7 @@ class DeductionResource extends Resource
 {
     protected static ?string $model = Deduction::class;  
     protected static ?string $navigationIcon = 'heroicon-o-document-minus';
+    protected static ?int $navigationSort = 5;
 
     public static function getLabel(): string
     {

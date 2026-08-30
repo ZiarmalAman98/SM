@@ -2,103 +2,67 @@
 
 namespace App\Filament\Actions;
 
-use App\Models\DailyTransfer;
-use App\Models\Transaction;
-use Filament\Actions\Action;
-use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Services\DailyBalanceService;
+use Filament\Actions\Action;
 use Filament\Forms;
-
+use Filament\Notifications\Notification;
 
 class ProcessDailyTransferAction
 {
     public static function make(): Action
     {
         return Action::make('process_daily_transfer')
-            ->label('Process Daily Transfer')
+            ->label(__('Process Daily Transfer'))
             ->icon('heroicon-o-banknotes')
             ->color('success')
             ->requiresConfirmation()
-            ->modalHeading('Process Daily Transfer')
-            ->modalDescription('This will transfer all unprocessed income from today to the destination account.')
-            ->modalSubmitActionLabel('Confirm Transfer')
+            ->modalHeading(__('Process Daily Transfer'))
+            ->modalDescription(__('This will transfer today\'s remaining cash (income + invoice payments − expenses) to the selected staff.'))
+            ->modalSubmitActionLabel(__('Confirm Transfer'))
             ->form([
                 Forms\Components\Select::make('destination_user_id')
-                    ->label('Destination Staff')
+                    ->label(__('Destination Staff'))
                     ->options(
                         fn () => User::query()
-                            ->where('type', 'staff') // ✅ exclude teacher, student, guardian etc.
+                            ->where('type', 'staff')
+                            ->orderBy('name')
                             ->pluck('name', 'id')
                     )
                     ->searchable()
                     ->required(),
             ])
-            ->action(function (array $data) {
-            try {
-                // 1) Guard BEFORE transaction
-                $totalIncome = Transaction::where('type', 'income')
-                    ->whereDate('created_at', today())
-                    ->whereNull('daily_transfer_id')
-                    ->sum('amount');
+            ->action(function (array $data): void {
+                $summary = app(DailyBalanceService::class)->todaySummary();
 
-                if ($totalIncome <= 0) {
+                if ($summary['net'] <= 0) {
                     Notification::make()
-                        ->title('No Income Found')
-                        ->body('There is no income to transfer today.')
+                        ->title(__('No Cash To Transfer'))
+                        ->body(__('Today\'s remaining cash is zero. Record income or invoice payments first, or expenses already used the cash.'))
                         ->warning()
                         ->send();
-                    return; // ✅ stop action here; prevents success toast
+
+                    return;
                 }
 
-                // 2) Do the work atomically
-                DB::transaction(function () use ($data, $totalIncome) {
-                    $transfer = DailyTransfer::create([
-                        'amount'              => $totalIncome,
-                        'destination_user_id' => $data['destination_user_id'],
-                        'reference'           => 'DAILY-' . now()->format('Ymd'),
-                        'transfer_date'       => now(),
-                    ]);
+                try {
+                    $transfer = app(DailyBalanceService::class)->processTransfer((int) $data['destination_user_id']);
 
-                    Transaction::create([
-                        'amount'            => $totalIncome,
-                        'type'              => 'transfer_out',
-                        'description'       => 'Daily transfer to staff #' . $transfer->destination_user_id,
-                        'daily_transfer_id' => $transfer->id,
-                        // 'user_id'        => null, // or system user id if you have one
-                    ]);
-
-                    Transaction::create([
-                        'amount'            => $totalIncome,
-                        'type'              => 'transfer_in',
-                        'description'       => 'Daily income transfer received',
-                        'daily_transfer_id' => $transfer->id,
-                        // 'user_id'           => $transfer->destination_user_id, // credit staff
-                    ]);
-
-                    Transaction::where('type', 'income')
-                        ->whereDate('created_at', today())
-                        ->whereNull('daily_transfer_id')
-                        ->update(['daily_transfer_id' => $transfer->id]);
-                });
-
-                // 3) Show success only if we actually transferred
-                Notification::make()
-                    ->title('Transfer Successful')
-                    ->body('All daily income has been transferred.')
-                    ->success()
-                    ->send();
-
-            } catch (\Exception $e) {
-                Notification::make()
-                    ->title('Transfer Failed')
-                    ->body($e->getMessage())
-                    ->danger()
-                    ->send();
-                throw $e;
-            }
-        });
-
+                    Notification::make()
+                        ->title(__('Transfer Successful'))
+                        ->body(__('Transferred :amount to daily transfer :reference.', [
+                            'amount' => 'AFN '.number_format((float) $transfer->amount, 2),
+                            'reference' => $transfer->reference,
+                        ]))
+                        ->success()
+                        ->send();
+                } catch (\Throwable $e) {
+                    Notification::make()
+                        ->title(__('Transfer Failed'))
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 }
-

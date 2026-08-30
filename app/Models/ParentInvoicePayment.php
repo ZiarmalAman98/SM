@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DailyBalanceService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -30,8 +31,14 @@ class ParentInvoicePayment extends Model
             }
         });
 
-        static::saved(fn(ParentInvoicePayment $payment) => $payment->invoice?->recalculatePayments());
-        static::deleted(fn(ParentInvoicePayment $payment) => $payment->invoice?->recalculatePayments());
+        static::saved(function (ParentInvoicePayment $payment): void {
+            $payment->invoice?->recalculatePayments();
+            app(DailyBalanceService::class)->syncInvoicePayment($payment);
+        });
+        static::deleted(function (ParentInvoicePayment $payment): void {
+            $payment->invoice?->recalculatePayments();
+            app(DailyBalanceService::class)->removeSource($payment);
+        });
     }
 
     public function invoice(): BelongsTo

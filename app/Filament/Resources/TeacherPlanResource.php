@@ -23,9 +23,12 @@ class TeacherPlanResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
-    protected static ?string $navigationGroup = 'Calendar';
-
     protected static ?int $navigationSort = 2;
+
+    public static function getNavigationGroup(): string
+    {
+        return __('Calendar');
+    }
 
     public static function form(Form $form): Form
     {

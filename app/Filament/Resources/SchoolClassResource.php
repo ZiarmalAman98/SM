@@ -18,7 +18,7 @@ class SchoolClassResource extends Resource
     protected static ?string $model = SchoolClass::class;
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
     // protected static ?string $navigationGroup = 'Default Data';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 1; // after Branch: create class
     public static function getNavigationGroup(): string
     {
         return __('Default Data');

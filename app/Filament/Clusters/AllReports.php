@@ -15,7 +15,7 @@ class AllReports extends Cluster
 
 	public static function getNavigationGroup(): string
 	{
-		return 'Reports';
+		return __('Reports');
 	}
 
     public static function getPages(): array

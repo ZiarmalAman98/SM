@@ -19,6 +19,12 @@ class EmployeeLeaveResource extends Resource
     protected static ?string $model = EmployeeLeave::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-right-start-on-rectangle';
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('My Account');
+    }
 
     public static function getLabel(): string
     {

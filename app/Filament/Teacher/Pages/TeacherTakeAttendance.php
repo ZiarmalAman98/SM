@@ -13,8 +13,13 @@ class TeacherTakeAttendance extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.teacher.pages.teacher-take-attendance';
-    protected static ?string $navigationGroup = 'Attendance';
+    protected static ?int $navigationSort = 1;
     protected ?string $maxContentWidth = 'full';
+
+    public static function getNavigationGroup(): string
+    {
+        return __('Attendance');
+    }
 
     public ?string $selectedDate = null;
     public array $subjects = [];

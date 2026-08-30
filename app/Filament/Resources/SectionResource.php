@@ -16,7 +16,7 @@ class SectionResource extends Resource
     protected static ?string $model = Section::class;
     protected static ?string $navigationIcon = 'heroicon-o-bookmark-square';
     // protected static ?string $navigationGroup = 'Default Data';
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 2;
     public static function getNavigationGroup(): string
     {
         return __('Default Data');

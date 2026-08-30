@@ -16,10 +16,17 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 class StockTransactionResource extends Resource
 {
     protected static ?string $model = StockTransaction::class;
+    protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
+    protected static ?int $navigationSort = 3;
 
     public static function getNavigationGroup(): string
     {
-        return __('Inventory Management');
+        return __('Employee Allocations');
+    }
+
+    public static function getNavigationSort(): ?int
+    {
+        return 3;
     }
 
     public static function getNavigationLabel(): string

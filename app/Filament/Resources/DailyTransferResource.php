@@ -3,8 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DailyTransferResource\Pages;
-use App\Filament\Resources\DailyTransferResource\RelationManagers;
+use App\Filament\Resources\TransactionResource;
 use App\Models\DailyTransfer;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -20,7 +21,22 @@ class DailyTransferResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return 'Daily Balance';
+        return __('Daily Balance');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Daily Transfers');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('Daily Transfer');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('Daily Transfers');
     }
 
     public static function form(Form $form): Form
@@ -28,17 +44,29 @@ class DailyTransferResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('amount')
+                    ->label(__('Amount'))
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('destination')
-                    ->required()
-                    ->maxLength(255),
+                    ->numeric()
+                    ->prefix('AFN'),
+                Forms\Components\Select::make('destination_user_id')
+                    ->label(__('Destination Staff'))
+                    ->options(
+                        fn () => User::query()
+                            ->where('type', 'staff')
+                            ->orderBy('name')
+                            ->pluck('name', 'id')
+                    )
+                    ->searchable()
+                    ->required(),
                 Forms\Components\TextInput::make('reference')
+                    ->label(__('Reference'))
                     ->required()
                     ->maxLength(255),
                 Forms\Components\DatePicker::make('transfer_date')
+                    ->label(__('Transfer Date'))
                     ->required()
                     ->jalali()
+                    ->locale('fa')
                     ->default(now()),
             ]);
     }
@@ -48,24 +76,28 @@ class DailyTransferResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')
-                    ->money('AFG'),
+                    ->label(__('Amount'))
+                    ->money('AFN')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('destinationUser.name')
-                    ->label('Destination Staff')
+                    ->label(__('Destination Staff'))
                     ->sortable()
                     ->searchable(),
-
-                Tables\Columns\TextColumn::make('reference'),
+                Tables\Columns\TextColumn::make('reference')
+                    ->label(__('Reference'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('transfer_date')
-                    ->jalaliDate(),
+                    ->label(__('Transfer Date'))
+                    ->jalaliDate()
+                    ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters([
-                //
-            ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('view_transactions')
-                    ->url(fn(DailyTransfer $record) => TransactionResource::getUrl('index', [
+                    ->label(__('View Transactions'))
+                    ->icon('heroicon-o-eye')
+                    ->url(fn (DailyTransfer $record) => TransactionResource::getUrl('index', [
                         'tableFilters' => [
                             'daily_transfer_id' => [
                                 'value' => $record->id,
@@ -78,13 +110,6 @@ class DailyTransferResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
-    }
-
-    public static function getRelations(): array
-    {
-        return [
-            // RelationManagers\TransactionsRelationManager::class,
-        ];
     }
 
     public static function getPages(): array

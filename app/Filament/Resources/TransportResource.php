@@ -28,7 +28,7 @@ class TransportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
     // protected static ?string $navigationGroup = 'Default Data';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 8;
 public static function getNavigationGroup(): string
 {
     return __('Default Data');

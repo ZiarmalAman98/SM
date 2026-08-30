@@ -18,6 +18,7 @@ class TaxResource extends Resource
     protected static ?string $model = Tax::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-currency-dollar';
+    protected static ?int $navigationSort = 6;
 
     public static function getNavigationGroup(): string
     {

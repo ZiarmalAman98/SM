@@ -22,11 +22,11 @@ class ParentInvoiceResource extends Resource
 {
     protected static ?string $model = ParentInvoice::class;
     // protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     public static function getNavigationGroup(): string
     {
-        return __('Invoices');
+        return __('Finance');
     }
 
     public static function getNavigationLabel(): string

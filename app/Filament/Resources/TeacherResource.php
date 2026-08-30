@@ -31,6 +31,7 @@ class TeacherResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static ?int $navigationSort = 2;
 
     public static function getLabel(): string
     {
@@ -54,7 +55,7 @@ class TeacherResource extends Resource
 
     public static function getNavigationGroup(): string
     {
-        return __('Account Management');
+        return __('Staff Management');
     }
 
     public static function form(Forms\Form $form): Forms\Form

@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Builder;
 class ExpenseCategoryResource extends Resource
 {
     protected static ?string $model = ExpenseCategory::class;
+    protected static ?int $navigationSort = 3;
 
 
 
