@@ -13,13 +13,9 @@ class QuickActions extends BaseWidget
     protected static ?int $sort = 2;
     protected int|string|array $columnSpan = 'full';
 
-    protected function getColumns(): int|array
+    protected function getColumns(): int
     {
-        return [
-            'default' => 1,
-            'sm' => 2,
-            'lg' => 3,
-        ];
+        return 3;
     }
 
     protected function getStats(): array
