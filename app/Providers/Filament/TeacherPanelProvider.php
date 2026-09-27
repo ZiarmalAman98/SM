@@ -65,8 +65,6 @@ class TeacherPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Teacher\\Widgets'
             )
 
-            ->widgets([])
-
             // Middleware
             ->middleware([
                 EncryptCookies::class,

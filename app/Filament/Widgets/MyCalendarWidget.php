@@ -16,6 +16,7 @@ use Saade\FilamentFullCalendar\Actions\ViewAction;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 use App\Filament\Resources\EventResource;
 use App\Models\Event;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Form;
 
 class MyCalendarWidget extends FullCalendarWidget
@@ -31,6 +32,8 @@ class MyCalendarWidget extends FullCalendarWidget
 
     public function fetchEvents(array $fetchInfo): array
     {
+        abort_unless(Auth::user()?->hasAnyRole(['super_admin', 'admin']), 403);
+
         return Event::query()
             ->where('starts_at', '>=', $fetchInfo['start'])
             ->where('ends_at', '<=', $fetchInfo['end'])

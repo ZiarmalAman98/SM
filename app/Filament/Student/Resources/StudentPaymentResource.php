@@ -43,15 +43,20 @@ class StudentPaymentResource extends Resource
         return __('My Payments');
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->whereHas(
+                'invoice.parentGuardian.linkedStudents',
+                fn(Builder $query) => $query->where('student_id', Auth::id())
+            )
+            ->with(['invoice.parentGuardian.user']);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn(Builder $query) => $query
-                ->whereHas('invoice.parentGuardian.linkedStudents', fn(Builder $query) => $query->where('student_id', Auth::id()))
-                ->with(['invoice.parentGuardian.user'])
-                ->orderBy('created_at', 'desc')
-            )
             ->columns([
                 Tables\Columns\TextColumn::make('receipt_number')
                     ->label(__('Receipt Number'))

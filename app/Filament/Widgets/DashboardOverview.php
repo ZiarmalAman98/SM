@@ -15,6 +15,21 @@ use Morilog\Jalali\Jalalian;
 
 class DashboardOverview extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected static bool $isLazy = true;
+
+    protected function getColumns(): int|array
+    {
+        return [
+            'default' => 1,
+            'sm' => 2,
+            'xl' => 4,
+        ];
+    }
+
     protected function getStats(): array
     {
         // Fetch user counts
@@ -131,70 +146,54 @@ class DashboardOverview extends BaseWidget
         $totalStudentBalanceDue = (float) (clone $studentInvoiceQuery)->sum('balance');
 
         return [
-            Stat::make(__('Total Students'), $totalStudents)
+            Stat::make(__('Total Students'), number_format($totalStudents))
                 ->description(__('Total enrolled students'))
-                ->descriptionIcon('heroicon-m-users'),
+                ->descriptionIcon('heroicon-m-users')
+                ->color('primary'),
 
-            Stat::make(__('Total Teachers'), $totalTeachers)
+            Stat::make(__('Total Teachers'), number_format($totalTeachers))
                 ->description(__('Total teaching staff'))
-                ->descriptionIcon('heroicon-m-academic-cap'),
+                ->descriptionIcon('heroicon-m-academic-cap')
+                ->color('success'),
 
-            Stat::make(__('Total Staff'), $totalStaff)
+            Stat::make(__('Total Staff'), number_format($totalStaff))
                 ->description(__('Total non-teaching staff'))
-                ->descriptionIcon('heroicon-m-building-office'),
+                ->descriptionIcon('heroicon-m-building-office')
+                ->color('gray'),
 
-            Stat::make(__('Total Male Students'), $totalMaleStudents)
-                ->description(__('Total enrolled male students'))
-                ->descriptionIcon('heroicon-m-users'),
-
-            Stat::make(__('Total Female Students'), $totalFemaleStudents)
-                ->description(__('Total enrolled female students'))
-                ->descriptionIcon('heroicon-m-users'),
-
-            Stat::make(__('Total Male Employees'), $totalMaleEmp)
-                ->description(__('Total male teachers and staff'))
-                ->descriptionIcon('heroicon-m-users'),
-
-            Stat::make(__('Total Female Employees'), $totalFemaleEmp)
-                ->description(__('Total female teachers and staff'))
-                ->descriptionIcon('heroicon-m-users'),
-
-            Stat::make(__('Total Classes'), $totalClasses)
+            Stat::make(__('Total Classes'), number_format($totalClasses))
                 ->description(__('Total school classes'))
-                ->descriptionIcon('heroicon-m-academic-cap'),
+                ->descriptionIcon('heroicon-m-academic-cap')
+                ->color('primary'),
 
-            Stat::make(__('Total Sections'), $totalSections)
+            Stat::make(__('Total Sections'), number_format($totalSections))
                 ->description(__('Total sections'))
-                ->descriptionIcon('heroicon-m-academic-cap'),
+                ->descriptionIcon('heroicon-m-squares-2x2')
+                ->color('info'),
 
-            Stat::make(__('Total Income This Month'), number_format($totalApprovedIncome, 2))
-                ->description(__("Income approved | {$currentJalaliMonthName} {$currentJalaliYear}"))
-                ->descriptionIcon('heroicon-m-banknotes')
+            Stat::make(__('Total Income This Month'), number_format($totalApprovedIncome, 2) . ' AFN')
+                ->description(__("Approved income | {$currentJalaliMonthName} {$currentJalaliYear}"))
+                ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color($approvedIncomeBadge),
 
-            Stat::make(__('Total Expenses This Month'), number_format($totalApprovedExpenses, 2))
-                ->description(__("Expenses approved | {$currentJalaliMonthName} {$currentJalaliYear}"))
-                ->descriptionIcon('heroicon-m-credit-card')
+            Stat::make(__('Total Expenses This Month'), number_format($totalApprovedExpenses, 2) . ' AFN')
+                ->description(__("Approved expenses | {$currentJalaliMonthName} {$currentJalaliYear}"))
+                ->descriptionIcon('heroicon-m-arrow-trending-down')
                 ->color($approvedExpenseBadge),
 
-            Stat::make(__('Total Invoice Payments This Month'), number_format($totalInvoicePayments, 2))
-                ->description(__("Invoice payments | {$currentJalaliMonthName} {$currentJalaliYear}"))
+            Stat::make(__('Invoice Payments This Month'), number_format($totalInvoicePayments, 2) . ' AFN')
+                ->description(__("Payments received | {$currentJalaliMonthName} {$currentJalaliYear}"))
                 ->descriptionIcon('heroicon-m-banknotes')
                 ->color($invoicePaymentsBadge),
 
-            Stat::make(__('Total Student Fees'), number_format($totalStudentInvoiceAmount, 2) . ' AFN')
-                ->description(__('Total invoiced student fees'))
-                ->descriptionIcon('heroicon-m-document-currency-dollar')
-                ->color('primary'),
-
-            Stat::make(__('Total Student Received'), number_format($totalStudentReceivedAmount, 2) . ' AFN')
+            Stat::make(__('Student Fees Received'), number_format($totalStudentReceivedAmount, 2) . ' AFN')
                 ->description(__('Total received from student invoices'))
-                ->descriptionIcon('heroicon-m-banknotes')
+                ->descriptionIcon('heroicon-m-check-badge')
                 ->color('success'),
 
-            Stat::make(__('Total Student Balance Due'), number_format($totalStudentBalanceDue, 2) . ' AFN')
-                ->description(__('Total remaining student invoice balance'))
-                ->descriptionIcon('heroicon-m-exclamation-circle')
+            Stat::make(__('Student Balance Due'), number_format($totalStudentBalanceDue, 2) . ' AFN')
+                ->description(__('Outstanding student invoice balance'))
+                ->descriptionIcon('heroicon-m-exclamation-triangle')
                 ->color($totalStudentBalanceDue > 0 ? 'danger' : 'success'),
         ];
     }

@@ -2,107 +2,105 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\FeePayment;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class FeePaymentPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
+    private function isAdmin(User $user): bool
+    {
+        return $user->hasAnyRole(['super_admin', 'admin']);
+    }
+
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_fee::payment');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('student')) {
+            return $user->can('View:OwnFees');
+        }
+
+        return $user->hasRole('parent') && $user->can('View:ChildrenFees');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('view_fee::payment');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('student')) {
+            return $feePayment->student_id === $user->id
+                && $user->can('View:OwnFees');
+        }
+
+        return $user->hasRole('parent')
+            && $user->can('View:ChildrenFees')
+            && $user->children1()->where('student_id', $feePayment->student_id)->exists();
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->can('create_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Create:FeePayment');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('update_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Update:FeePayment');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('delete_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Delete:FeePayment');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('DeleteAny:FeePayment');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
     public function forceDelete(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('force_delete_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('ForceDelete:FeePayment');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('ForceDeleteAny:FeePayment');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
     public function restore(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('restore_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Restore:FeePayment');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('RestoreAny:FeePayment');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
     public function replicate(User $user, FeePayment $feePayment): bool
     {
-        return $user->can('replicate_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Replicate:FeePayment');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_fee::payment');
+        return $this->isAdmin($user)
+            && $user->can('Reorder:FeePayment');
     }
 }

@@ -2,107 +2,114 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Attendance;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AttendancePolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
+    private function isAdmin(User $user): bool
+    {
+        return $user->hasAnyRole(['super_admin', 'admin']);
+    }
+
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_student::attendance::report');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('teacher')) {
+            return $user->can('ViewAny:Attendance');
+        }
+
+        return $user->hasRole('student')
+            ? $user->can('View:OwnAttendance')
+            : $user->hasRole('parent') && $user->can('View:ChildrenAttendance');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Attendance $attendance): bool
     {
-        return $user->can('view_student::attendance::report');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('teacher')) {
+            return $attendance->teacher_id === $user->id
+                && $user->can('View:Attendance');
+        }
+
+        if ($user->hasRole('student')) {
+            return $attendance->student_id === $user->id
+                && $user->can('View:OwnAttendance');
+        }
+
+        return $user->hasRole('parent')
+            && $user->can('View:ChildrenAttendance')
+            && $user->children1()->where('student_id', $attendance->student_id)->exists();
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->can('create_student::attendance::report');
+        return $this->isAdmin($user)
+            || ($user->hasRole('teacher') && $user->can('Create:Attendance'));
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Attendance $attendance): bool
     {
-        return $user->can('update_student::attendance::report');
+        return $this->isAdmin($user)
+            || ($user->hasRole('teacher')
+                && $attendance->teacher_id === $user->id
+                && $user->can('Update:Attendance'));
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Attendance $attendance): bool
     {
-        return $user->can('delete_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('Delete:Attendance');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('DeleteAny:Attendance');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
     public function forceDelete(User $user, Attendance $attendance): bool
     {
-        return $user->can('force_delete_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('ForceDelete:Attendance');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('ForceDeleteAny:Attendance');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
     public function restore(User $user, Attendance $attendance): bool
     {
-        return $user->can('restore_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('Restore:Attendance');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('RestoreAny:Attendance');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
     public function replicate(User $user, Attendance $attendance): bool
     {
-        return $user->can('replicate_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('Replicate:Attendance');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_student::attendance::report');
+        return $this->isAdmin($user)
+            && $user->can('Reorder:Attendance');
     }
 }

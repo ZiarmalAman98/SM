@@ -11,58 +11,75 @@ use Illuminate\Support\Facades\Auth;
 
 class StatsOverview extends BaseWidget
 {
+    protected static ?int $sort = 1;
+
     protected function getStats(): array
     {
-        // Get the authenticated user
         $user = Auth::user();
 
-        // Total Enrollments
-        $totalEnrollments = StudentClass::where('student_id', $user->id)->count();
+        $activeClasses = StudentClass::query()
+            ->where('student_id', $user->id)
+            ->where('status', 'active');
 
-        // Completed Courses
-        $completedCourses = StudentClass::where('student_id', $user->id)
+        $totalEnrollments = (clone $activeClasses)->count();
+
+        $completedCourses = StudentClass::query()
+            ->where('student_id', $user->id)
             ->where('status', 'completed')
             ->count();
 
-        // Pending Assignments
-        $pendingAssignments = Assignment::whereDoesntHave('submissions', function ($query) use ($user) {
-            $query->where('student_id', $user->id);
-        })->count();
+        // Only count assignments belonging to the student's active class.
+        $pendingAssignments = Assignment::query()
+            ->whereHas('subject.schoolClass.studentClasses', function ($query) use ($user) {
+                $query->where('student_id', $user->id)
+                    ->where('status', 'active');
+            })
+            ->whereDoesntHave('submissions', function ($query) use ($user) {
+                $query->where('student_id', $user->id);
+            })
+            ->where(function ($query) {
+                $query->whereNull('deadline')
+                    ->orWhere('deadline', '>=', now());
+            })
+            ->count();
 
-        // Student Visits
         $studentVisits = \Illuminate\Support\Facades\DB::table('visitor_logs')
             ->where('person_to_meet', $user->id)
             ->count();
 
-        // Total invoice payments for the student's family
         $totalPayments = ParentInvoicePayment::query()
-            ->whereHas('invoice.parentGuardian.linkedStudents', fn($query) => $query->where('student_id', $user->id))
+            ->whereHas('invoice.parentGuardian.linkedStudents', fn ($query) =>
+                $query->where('student_id', $user->id)
+            )
             ->sum('amount');
 
         return [
-            Stat::make(__('Total Enrollments'), $totalEnrollments)
-                ->description(__('Number of courses you are enrolled in'))
-                ->descriptionIcon('heroicon-m-user-group')
+            Stat::make(__('Active Classes'), $totalEnrollments)
+                ->description(__('Your current active enrollments'))
+                ->descriptionIcon('heroicon-m-academic-cap')
                 ->color('primary'),
 
             Stat::make(__('Completed Courses'), $completedCourses)
-                ->description(__('Courses you have completed'))
+                ->description(__('Courses completed'))
                 ->descriptionIcon('heroicon-m-check-circle')
                 ->color('success'),
 
             Stat::make(__('Pending Assignments'), $pendingAssignments)
-                ->description(__('Assignments yet to be submitted'))
+                ->description(__('Assignments waiting for submission'))
                 ->descriptionIcon('heroicon-m-clock')
-                ->color('warning'),
+                ->color($pendingAssignments > 0 ? 'warning' : 'success'),
 
-            Stat::make(__('Student Visits'), $studentVisits)
-                ->description(__('Number of visits to the platform'))
-                ->descriptionIcon('heroicon-m-clipboard')
+            Stat::make(__('School Visits'), $studentVisits)
+                ->description(__('Recorded reception visits'))
+                ->descriptionIcon('heroicon-m-building-office')
                 ->color('primary'),
 
-            Stat::make(__('Total Invoice Payments'), __('AF :amount', ['amount' => number_format($totalPayments, 2)]))
-                ->description(__('Total amount paid for invoices'))
-                ->descriptionIcon('heroicon-m-credit-card')
+            Stat::make(
+                __('Invoice Payments'),
+                __('AF :amount', ['amount' => number_format($totalPayments, 2)])
+            )
+                ->description(__('Payments recorded for your invoices'))
+                ->descriptionIcon('heroicon-m-banknotes')
                 ->color('success'),
         ];
     }

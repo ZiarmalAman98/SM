@@ -9,28 +9,28 @@ use Symfony\Component\HttpFoundation\Response;
 class StudentMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Allow only users assigned to the student panel.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Role authorization is preferred; the legacy type field remains
+     * as a temporary compatibility fallback.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (
-            !$request->user() ||
-            ($request->user()->type != 'student')
-        ) {
-            if ($request->user()->type == 'admin') {
-                return redirect('/admin');
-            }
-            if ($request->user()->type == 'teacher') {
-                return redirect('/teacher');
-            }
-            if ($request->user()->type == 'guardian') {
-                return redirect('/parent');
-            }
-            abort(403, 'Access denied. Only students can access this page.');
+        $user = $request->user();
+
+        if (! $user) {
+            abort(403, 'Access denied. Please sign in.');
         }
 
-        return $next($request);
+        if ($user->hasRole('student') || $user->type === 'student') {
+            return $next($request);
+        }
+
+        return match ($user->type) {
+            'admin' => redirect('/admin'),
+            'teacher' => redirect('/teacher'),
+            'guardian' => redirect('/parent'),
+            default => abort(403, 'Access denied. Student access is required.'),
+        };
     }
 }

@@ -6,6 +6,8 @@ use Filament\Support\Assets\Css;
 use Morilog\Jalali\CalendarUtils;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentView;
@@ -33,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::before(function (User $user, string $ability): ?bool {
+            return $user->hasRole('super_admin') ? true : null;
+        });
+
         Model::unguard();
         Schema::defaultStringLength(191);
         // FilamentView::registerRenderHook(
