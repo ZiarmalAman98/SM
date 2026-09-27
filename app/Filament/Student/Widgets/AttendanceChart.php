@@ -14,7 +14,7 @@ class AttendanceChart extends ChartWidget
     }
     
     protected static ?int $sort = 2;
-    protected int|string|array $columnSpan = 2;
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -92,6 +92,16 @@ class AttendanceChart extends ChartWidget
         return [
             'labels' => $labels,
             'datasets' => array_merge($presentData, $absentData),
+        ];
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => ['legend' => ['position' => 'bottom']],
+            'scales' => ['y' => ['beginAtZero' => true]],
         ];
     }
 
