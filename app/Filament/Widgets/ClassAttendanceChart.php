@@ -78,7 +78,7 @@ class ClassAttendanceChart extends BarChartWidget
             $records = Attendance::query()
                 ->whereDate('date', today())
                 ->whereIn('school_class_id', $classIds)
-                ->select('school_class_id', 'student_id', 'morning_status', 'afternoon_status')
+                ->select('school_class_id', 'student_id', 'status')
                 ->get();
 
             $attendanceByClass = $records->groupBy('school_class_id');
@@ -89,8 +89,7 @@ class ClassAttendanceChart extends BarChartWidget
                 ->get([
                     'subject_id',
                     'student_id',
-                    'morning_status',
-                    'afternoon_status',
+                    'status',
                 ]);
 
             foreach ($records as $record) {
@@ -142,9 +141,7 @@ class ClassAttendanceChart extends BarChartWidget
 
             $presentStudents = $records
                 ->filter(
-                    fn ($record) =>
-                        (bool) $record->morning_status ||
-                        (bool) $record->afternoon_status
+                    fn ($record) => (bool) $record->status
                 )
                 ->pluck('student_id')
                 ->unique()
