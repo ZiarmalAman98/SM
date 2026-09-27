@@ -64,10 +64,6 @@ class StudentPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Student\\Widgets'
             )
 
-            ->widgets([
-                \App\Filament\Student\Widgets\AttendanceChart::class,
-            ])
-
             // Middleware
             ->middleware([
                 EncryptCookies::class,
