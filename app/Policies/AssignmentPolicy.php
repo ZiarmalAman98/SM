@@ -2,107 +2,65 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\Assignment;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class AssignmentPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_assignment');
+        return $user->hasAnyRole(['super_admin', 'admin', 'teacher', 'student'])
+            || $user->can('ViewAny:Assignment');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, Assignment $assignment): bool
     {
-        return $user->can('view_assignment');
+        if ($user->hasAnyRole(['super_admin', 'admin'])) {
+            return true;
+        }
+
+        if ($user->hasRole('teacher')) {
+            return (int) $assignment->teacher_id === (int) $user->id;
+        }
+
+        if ($user->hasRole('student')) {
+            return $assignment->subject()
+                ->whereHas('schoolClass.studentClasses', fn ($q) =>
+                    $q->where('student_id', $user->id)->where('status', 'active')
+                )
+                ->exists();
+        }
+
+        return false;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->can('create_assignment');
+        return $user->hasAnyRole(['super_admin', 'admin'])
+            || ($user->hasRole('teacher') && $user->can('Create:Assignment'));
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, Assignment $assignment): bool
     {
-        return $user->can('update_assignment');
+        return $user->hasAnyRole(['super_admin', 'admin'])
+            || ($user->hasRole('teacher')
+                && (int) $assignment->teacher_id === (int) $user->id
+                && $user->can('Update:Assignment'));
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, Assignment $assignment): bool
     {
-        return $user->can('delete_assignment');
+        return $user->hasAnyRole(['super_admin', 'admin'])
+            || ($user->hasRole('teacher')
+                && (int) $assignment->teacher_id === (int) $user->id
+                && $user->can('Delete:Assignment'));
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_assignment');
-    }
-
-    /**
-     * Determine whether the user can permanently delete.
-     */
-    public function forceDelete(User $user, Assignment $assignment): bool
-    {
-        return $user->can('force_delete_assignment');
-    }
-
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
-    public function forceDeleteAny(User $user): bool
-    {
-        return $user->can('force_delete_any_assignment');
-    }
-
-    /**
-     * Determine whether the user can restore.
-     */
-    public function restore(User $user, Assignment $assignment): bool
-    {
-        return $user->can('restore_assignment');
-    }
-
-    /**
-     * Determine whether the user can bulk restore.
-     */
-    public function restoreAny(User $user): bool
-    {
-        return $user->can('restore_any_assignment');
-    }
-
-    /**
-     * Determine whether the user can replicate.
-     */
-    public function replicate(User $user, Assignment $assignment): bool
-    {
-        return $user->can('replicate_assignment');
-    }
-
-    /**
-     * Determine whether the user can reorder.
-     */
-    public function reorder(User $user): bool
-    {
-        return $user->can('reorder_assignment');
+        return $user->hasAnyRole(['super_admin', 'admin']) && $user->can('DeleteAny:Assignment');
     }
 }
