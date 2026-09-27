@@ -2,107 +2,116 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\ExamResult;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ExamResultPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
+    private function isAdmin(User $user): bool
+    {
+        return $user->hasAnyRole(['super_admin', 'admin']);
+    }
+
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_exam::result');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('teacher')) {
+            return $user->can('ViewAny:ExamResult');
+        }
+
+        if ($user->hasRole('student')) {
+            return $user->can('View:OwnExamResults');
+        }
+
+        return $user->hasRole('parent') && $user->can('View:ChildrenExamResults');
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, ExamResult $examResult): bool
     {
-        return $user->can('view_exam::result');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('teacher')) {
+            return $user->can('View:ExamResult')
+                && $examResult->subject?->teacher_id === $user->id;
+        }
+
+        if ($user->hasRole('student')) {
+            return $examResult->student_id === $user->id
+                && $user->can('View:OwnExamResults');
+        }
+
+        return $user->hasRole('parent')
+            && $user->can('View:ChildrenExamResults')
+            && $user->children1()->where('student_id', $examResult->student_id)->exists();
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->can('create_exam::result');
+        return $this->isAdmin($user)
+            || ($user->hasRole('teacher') && $user->can('Create:ExamResult'));
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, ExamResult $examResult): bool
     {
-        return $user->can('update_exam::result');
+        return $this->isAdmin($user)
+            || ($user->hasRole('teacher')
+                && $examResult->subject?->teacher_id === $user->id
+                && $user->can('Update:ExamResult'));
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, ExamResult $examResult): bool
     {
-        return $user->can('delete_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('Delete:ExamResult');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('DeleteAny:ExamResult');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
     public function forceDelete(User $user, ExamResult $examResult): bool
     {
-        return $user->can('force_delete_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('ForceDelete:ExamResult');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('ForceDeleteAny:ExamResult');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
     public function restore(User $user, ExamResult $examResult): bool
     {
-        return $user->can('restore_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('Restore:ExamResult');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('RestoreAny:ExamResult');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
     public function replicate(User $user, ExamResult $examResult): bool
     {
-        return $user->can('replicate_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('Replicate:ExamResult');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_exam::result');
+        return $this->isAdmin($user)
+            && $user->can('Reorder:ExamResult');
     }
 }
