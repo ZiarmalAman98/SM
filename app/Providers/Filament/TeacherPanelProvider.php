@@ -1,4 +1,3 @@
-```php
 <?php
 
 namespace App\Providers\Filament;
@@ -35,18 +34,22 @@ class TeacherPanelProvider extends PanelProvider
             ->brandLogoHeight('64px')
             ->favicon(asset('aman-logo.svg'))
 
+            // Primary Color
             ->colors([
                 'primary' => '#24aae1',
             ])
 
             ->profile()
             ->login()
+            ->passwordReset()
 
+            // Resources
             ->discoverResources(
                 in: app_path('Filament/Teacher/Resources'),
                 for: 'App\\Filament\\Teacher\\Resources'
             )
 
+            // Pages
             ->discoverPages(
                 in: app_path('Filament/Teacher/Pages'),
                 for: 'App\\Filament\\Teacher\\Pages'
@@ -56,6 +59,7 @@ class TeacherPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
 
+            // Widgets
             ->discoverWidgets(
                 in: app_path('Filament/Teacher/Widgets'),
                 for: 'App\\Filament\\Teacher\\Widgets'
@@ -63,6 +67,7 @@ class TeacherPanelProvider extends PanelProvider
 
             ->widgets([])
 
+            // Middleware
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -75,19 +80,18 @@ class TeacherPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
 
+            // Chat
             ->plugin(
                 ChatifyPlugin::make()
             )
 
+            // Footer
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
 
-            ->passwordReset()
-
-            ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
-
+            // Navigation Groups
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label(fn (): string => __('Attendance'))
@@ -116,4 +120,3 @@ class TeacherPanelProvider extends PanelProvider
             ]);
     }
 }
-```

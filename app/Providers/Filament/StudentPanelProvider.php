@@ -1,4 +1,3 @@
-```php
 <?php
 
 namespace App\Providers\Filament;
@@ -8,19 +7,17 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationGroup;
 use Monzer\FilamentChatifyIntegration\ChatifyPlugin;
 
 class StudentPanelProvider extends PanelProvider
@@ -31,6 +28,7 @@ class StudentPanelProvider extends PanelProvider
             ->id('student')
             ->path('student')
             ->login()
+            ->passwordReset()
             ->profile()
 
             // Aman Private School Branding
@@ -39,15 +37,18 @@ class StudentPanelProvider extends PanelProvider
             ->brandLogoHeight('64px')
             ->favicon(asset('aman-logo.svg'))
 
+            // Primary Color
             ->colors([
                 'primary' => '#24aae1',
             ])
 
+            // Resources
             ->discoverResources(
                 in: app_path('Filament/Student/Resources'),
                 for: 'App\\Filament\\Student\\Resources'
             )
 
+            // Pages
             ->discoverPages(
                 in: app_path('Filament/Student/Pages'),
                 for: 'App\\Filament\\Student\\Pages'
@@ -57,22 +58,15 @@ class StudentPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
 
+            // Widgets
             ->discoverWidgets(
                 in: app_path('Filament/Student/Widgets'),
                 for: 'App\\Filament\\Student\\Widgets'
             )
 
-            ->widgets([
-                // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
-            ])
+            ->widgets([])
 
-            ->passwordReset()
-
-            ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
-
-            ->sidebarCollapsibleOnDesktop()
-
+            // Middleware
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -85,20 +79,18 @@ class StudentPanelProvider extends PanelProvider
                 DispatchServingFilamentEvent::class,
             ])
 
-            ->plugins([
-                // \Hasnayeen\Themes\ThemesPlugin::make()
-                //     ->canViewThemesPage(fn() => false),
-            ])
-
+            // Chat
             ->plugin(
                 ChatifyPlugin::make()
             )
 
+            // Footer
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
 
+            // Navigation Groups
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label(fn (): string => __('Academic'))
@@ -127,13 +119,19 @@ class StudentPanelProvider extends PanelProvider
                     ->icon('heroicon-o-inbox'),
             ])
 
+            // SPA
             ->spa()
+
+            // Notifications
             ->databaseNotifications()
 
+            // Sidebar
+            ->sidebarCollapsibleOnDesktop()
+
+            // Authentication Middleware
             ->authMiddleware([
                 Authenticate::class,
                 StudentMiddleware::class,
             ]);
     }
 }
-```
