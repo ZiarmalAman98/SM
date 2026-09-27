@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CompleteSystemSeeder::class,
+            ProfessionalPermissionSeeder::class,
             AishaNooriGrade5ExamSeeder::class,
         ]);
     }
