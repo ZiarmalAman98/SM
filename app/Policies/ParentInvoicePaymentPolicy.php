@@ -2,107 +2,102 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\ParentInvoicePayment;
+use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class ParentInvoicePaymentPolicy
 {
     use HandlesAuthorization;
 
-    /**
-     * Determine whether the user can view any models.
-     */
+    private function isAdmin(User $user): bool
+    {
+        return $user->hasAnyRole(['super_admin', 'admin']);
+    }
+
+    private function belongsToStudent(User $user, ParentInvoicePayment $payment): bool
+    {
+        $studentIds = $payment->invoice?->parentGuardian?->linkedStudents()?->pluck('student_id') ?? collect();
+
+        return $studentIds->contains($user->id);
+    }
+
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_parent::invoice::payment');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        return ($user->hasRole('student') && $user->can('View:OwnPayments'))
+            || ($user->hasRole('parent') && $user->can('View:ChildrenPayments'));
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
     public function view(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('view_parent::invoice::payment');
+        if ($this->isAdmin($user)) {
+            return true;
+        }
+
+        if ($user->hasRole('student')) {
+            return $user->can('View:OwnPayments')
+                && $this->belongsToStudent($user, $parentInvoicePayment);
+        }
+
+        if ($user->hasRole('parent')) {
+            return $user->can('View:ChildrenPayments')
+                && $parentInvoicePayment->invoice?->parentGuardian?->user_id === $user->id;
+        }
+
+        return false;
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
     public function create(User $user): bool
     {
-        return $user->can('create_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Create:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('update_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Update:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
     public function delete(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('delete_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Delete:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can bulk delete.
-     */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('DeleteAny:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can permanently delete.
-     */
     public function forceDelete(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('force_delete_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('ForceDelete:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can permanently bulk delete.
-     */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('ForceDeleteAny:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can restore.
-     */
     public function restore(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('restore_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Restore:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can bulk restore.
-     */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('RestoreAny:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can replicate.
-     */
     public function replicate(User $user, ParentInvoicePayment $parentInvoicePayment): bool
     {
-        return $user->can('replicate_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Replicate:ParentInvoicePayment');
     }
 
-    /**
-     * Determine whether the user can reorder.
-     */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_parent::invoice::payment');
+        return $this->isAdmin($user) && $user->can('Reorder:ParentInvoicePayment');
     }
 }
