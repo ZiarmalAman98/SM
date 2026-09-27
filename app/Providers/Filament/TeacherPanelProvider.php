@@ -65,7 +65,9 @@ class TeacherPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Teacher\\Widgets'
             )
 
-            ->widgets([])
+            ->widgets([
+                \App\Filament\Teacher\Widgets\StatsOverview::class,
+            ])
 
             // Middleware
             ->middleware([
