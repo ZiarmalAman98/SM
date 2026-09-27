@@ -17,12 +17,12 @@
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <a href="{{ AppFilamentResourcesStudentResource::getUrl('create') }}"
+                <a href="{{ \App\Filament\Resources\StudentResource::getUrl('create') }}"
                    class="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-600">
                     <x-heroicon-m-user-plus class="h-4 w-4" />
                     {{ __('Add Student') }}
                 </a>
-                <a href="{{ AppFilamentResourcesTeacherResource::getUrl('create') }}"
+                <a href="{{ \App\Filament\Resources\TeacherResource::getUrl('create') }}"
                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
                     <x-heroicon-m-academic-cap class="h-4 w-4" />
                     {{ __('Add Teacher') }}
