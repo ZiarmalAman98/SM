@@ -76,13 +76,6 @@ class AdminPanelProvider extends PanelProvider
                 for: 'App\\Filament\\Widgets'
             )
 
-            ->widgets([
-                \App\Filament\Widgets\QuickActions::class,
-                \App\Filament\Widgets\RecentPayments::class,
-                \App\Filament\Widgets\AttendanceDashboard::class,
-                \App\Filament\Widgets\ClassAttendanceChart::class,
-            ])
-
             ->sidebarCollapsibleOnDesktop()
 
             ->navigationGroups([
@@ -236,6 +229,17 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+
+            // Modern admin dashboard UI
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.admin-dashboard-style')->render(),
+            )
+
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): string => view('filament.admin-dashboard-hero')->render(),
+            )
 
             // Footer
             ->renderHook(
