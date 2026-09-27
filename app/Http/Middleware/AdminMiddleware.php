@@ -9,31 +9,28 @@ use Symfony\Component\HttpFoundation\Response;
 class AdminMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Allow only users assigned to the administrative panel.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Authorization is role-first, with the legacy type field retained
+     * temporarily for backwards compatibility during the migration.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (
-            !$request->user() ||
-            ($request->user()->type != 'admin')
-        ) {
-            if ($request->user()->type == 'staff') {
-                return $next($request);
-            }
-            if ($request->user()->type == 'student') {
-                return redirect('/student');
-            }
-            if ($request->user()->type == 'teacher') {
-                return redirect('/teacher');
-            }
-            if ($request->user()->type == 'guardian') {
-                return redirect('/parent');
-            }
-            abort(403, 'Access denied. Only super admin can access this page.');
+        $user = $request->user();
+
+        if (! $user) {
+            abort(403, 'Access denied. Please sign in.');
         }
 
-        return $next($request);
+        if ($user->hasAnyRole(['super_admin', 'admin']) || $user->type === 'admin') {
+            return $next($request);
+        }
+
+        return match ($user->type) {
+            'student' => redirect('/student'),
+            'teacher' => redirect('/teacher'),
+            'guardian' => redirect('/parent'),
+            default => abort(403, 'Access denied. Administrative access is required.'),
+        };
     }
 }
