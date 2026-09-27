@@ -79,6 +79,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 \App\Filament\Widgets\QuickActions::class,
                 \App\Filament\Widgets\RecentPayments::class,
+                \App\Filament\Widgets\AttendanceDashboard::class,
             ])
 
             ->sidebarCollapsibleOnDesktop()
