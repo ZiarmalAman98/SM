@@ -11,6 +11,10 @@ class ExpenseChart extends BarChartWidget
 {
     protected static ?string $heading = null;
 
+    protected static bool $isLazy = true;
+
+    protected int|string|array $columnSpan = 1;
+
     public function getHeading(): string
     {
         return __('مصارف تائید شده بر اساس دوره');
@@ -23,6 +27,16 @@ class ExpenseChart extends BarChartWidget
             'week' => __('هفته جاری'),
             'month' => __('ماه جاری'),
             'year' => __('سال جاری'),
+        ];
+    }
+
+    protected function getOptions(): array
+    {
+        return [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
+            'plugins' => ['legend' => ['position' => 'bottom']],
+            'scales' => ['y' => ['beginAtZero' => true]],
         ];
     }
 
