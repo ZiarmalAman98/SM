@@ -21,13 +21,9 @@ class DashboardOverview extends BaseWidget
 
     protected static bool $isLazy = true;
 
-    protected function getColumns(): int|array
+    protected function getColumns(): int
     {
-        return [
-            'default' => 1,
-            'sm' => 2,
-            'xl' => 4,
-        ];
+        return 4;
     }
 
     protected function getStats(): array
