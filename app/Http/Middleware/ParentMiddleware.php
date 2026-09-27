@@ -9,33 +9,28 @@ use Symfony\Component\HttpFoundation\Response;
 class ParentMiddleware
 {
     /**
-     * Handle an incoming request.
+     * Allow only users assigned to the parent panel.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Role authorization is preferred; the legacy guardian type remains
+     * as a temporary compatibility fallback.
      */
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
 
         if (! $user) {
-            abort(403, 'Access denied. Please sign in as parent.');
+            abort(403, 'Access denied. Please sign in as a parent.');
         }
 
-        if ($user->type !== 'guardian') {
-            if ($user->type == 'staff') {
-                return $next($request);
-            }
-            if ($user->type == 'student') {
-                return redirect('/student');
-            }
-            if ($user->type == 'teacher') {
-                return redirect('/teacher');
-            }
-            if ($user->type == 'admin') {
-                return redirect('/admin');
-            }
-            abort(403, 'Access denied. Only parent can access this page.');
+        if ($user->hasRole('parent') || $user->type === 'guardian') {
+            return $next($request);
         }
-        return $next($request);
+
+        return match ($user->type) {
+            'admin' => redirect('/admin'),
+            'teacher' => redirect('/teacher'),
+            'student' => redirect('/student'),
+            default => abort(403, 'Access denied. Parent access is required.'),
+        };
     }
 }
