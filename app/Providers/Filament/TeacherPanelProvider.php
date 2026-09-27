@@ -1,3 +1,4 @@
+```php
 <?php
 
 namespace App\Providers\Filament;
@@ -8,13 +9,10 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
-use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -30,23 +28,41 @@ class TeacherPanelProvider extends PanelProvider
         return $panel
             ->id('teacher')
             ->path('teacher')
-            ->brandName(fn (): string => appReportSettings()['app_name'])
-            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
-            ->brandLogoHeight('100px')
+
+            // Aman Private School Branding
+            ->brandName('Aman Private School')
+            ->brandLogo(asset('aman-logo.svg'))
+            ->brandLogoHeight('64px')
+            ->favicon(asset('aman-logo.svg'))
+
             ->colors([
-                'primary' => "#24aae1",
+                'primary' => '#24aae1',
             ])
+
             ->profile()
             ->login()
-            ->discoverResources(in: app_path('Filament/Teacher/Resources'), for: 'App\\Filament\\Teacher\\Resources')
-            ->discoverPages(in: app_path('Filament/Teacher/Pages'), for: 'App\\Filament\\Teacher\\Pages')
+
+            ->discoverResources(
+                in: app_path('Filament/Teacher/Resources'),
+                for: 'App\\Filament\\Teacher\\Resources'
+            )
+
+            ->discoverPages(
+                in: app_path('Filament/Teacher/Pages'),
+                for: 'App\\Filament\\Teacher\\Pages'
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Teacher/Widgets'), for: 'App\\Filament\\Teacher\\Widgets')
-            ->widgets([
 
-            ])
+            ->discoverWidgets(
+                in: app_path('Filament/Teacher/Widgets'),
+                for: 'App\\Filament\\Teacher\\Widgets'
+            )
+
+            ->widgets([])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -58,34 +74,46 @@ class TeacherPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+
             ->plugin(
                 ChatifyPlugin::make()
             )
+
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
+
             ->passwordReset()
+
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
+
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label(fn (): string => __('Attendance'))
                     ->icon('heroicon-o-clipboard-document-check'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Homeworks'))
                     ->icon('heroicon-o-paper-clip'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Academic'))
                     ->icon('heroicon-o-book-open'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('My Account'))
                     ->icon('heroicon-o-user'),
             ])
+
             ->sidebarCollapsibleOnDesktop()
+
             ->databaseNotifications()
+
             ->authMiddleware([
                 Authenticate::class,
-                TeacherMiddleware::class
+                TeacherMiddleware::class,
             ]);
     }
 }
+```

@@ -24,19 +24,25 @@ class DashboardOverview extends BaseWidget
 
         // Gender-based counts
         $totalMaleStudents = User::where('type', 'student')
-            ->whereHas('student', fn($query) => $query->where('gender', 'male'))
+            ->whereHas('student', fn($query) => $query->whereRaw('LOWER(gender) = ?', ['male']))
             ->count();
 
         $totalFemaleStudents = User::where('type', 'student')
-            ->whereHas('student', fn($query) => $query->where('gender', 'female'))
+            ->whereHas('student', fn($query) => $query->whereRaw('LOWER(gender) = ?', ['female']))
             ->count();
 
-        $totalMaleEmp = User::where('type', 'staff')
-            ->whereHas('staff', fn($query) => $query->where('gender', 'male'))
+        $totalMaleEmp = User::whereIn('type', ['staff', 'teacher'])
+            ->where(function ($query) {
+                $query->whereHas('staff', fn($staff) => $staff->whereRaw('LOWER(gender) = ?', ['male']))
+                    ->orWhereHas('teacher', fn($teacher) => $teacher->whereRaw('LOWER(gender) = ?', ['male']));
+            })
             ->count();
 
-        $totalFemaleEmp = User::where('type', 'staff')
-            ->whereHas('staff', fn($query) => $query->where('gender', 'female'))
+        $totalFemaleEmp = User::whereIn('type', ['staff', 'teacher'])
+            ->where(function ($query) {
+                $query->whereHas('staff', fn($staff) => $staff->whereRaw('LOWER(gender) = ?', ['female']))
+                    ->orWhereHas('teacher', fn($teacher) => $teacher->whereRaw('LOWER(gender) = ?', ['female']));
+            })
             ->count();
 
         // Classes and sections
@@ -146,11 +152,11 @@ class DashboardOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-users'),
 
             Stat::make(__('Total Male Employees'), $totalMaleEmp)
-                ->description(__('Total male staff'))
+                ->description(__('Total male teachers and staff'))
                 ->descriptionIcon('heroicon-m-users'),
 
             Stat::make(__('Total Female Employees'), $totalFemaleEmp)
-                ->description(__('Total female staff'))
+                ->description(__('Total female teachers and staff'))
                 ->descriptionIcon('heroicon-m-users'),
 
             Stat::make(__('Total Classes'), $totalClasses)
@@ -198,6 +204,10 @@ class DashboardOverview extends BaseWidget
      */
     protected function getBadgeColor(float $value, array $thresholds): string
     {
+        if ($value <= 0) {
+            return 'gray';
+        }
+
         if ($value >= ($thresholds[50000] ?? PHP_FLOAT_MAX)) {
             return 'primary';
         }

@@ -34,13 +34,9 @@
         } => $footerPosition === 'footer',
     ])
 >
-    <a href="https://afghancosmos.com" target="_blank" rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 font-medium text-gray-600 transition hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400">
-        <span>&copy; {{ now()->format('Y') }} Made By</span>
-        <img src="{{ asset('schools/cosmos.png') }}" alt="Afghan Cosmos IT & Solutions"
-            class="h-6 w-6 rounded-full bg-white object-contain p-0.5 ring-1 ring-gray-200 dark:ring-gray-700">
-        <span>Afghan Cosmos IT &amp; Solutions</span>
-    </a>
+    <span class="inline-flex items-center justify-center gap-2 font-medium text-gray-600 dark:text-gray-300">
+        &copy; {{ now()->format('Y') }} Aman Private School. All rights reserved.
+    </span>
 
     @if($loadTime)
         <span class="ms-2">{{ $loadTime }}s</span>

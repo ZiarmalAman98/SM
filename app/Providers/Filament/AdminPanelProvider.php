@@ -29,10 +29,8 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 
-
 class AdminPanelProvider extends PanelProvider
 {
-
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -41,34 +39,187 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->profile()
-            // ->lable('dashboard')
-            ->brandName(fn (): string => appReportSettings()['app_name'])
-            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
-            ->brandLogoHeight('100px')
+
+            // Aman Private School Branding
+            ->brandName('Aman Private School')
+            ->brandLogo(asset('aman-logo.svg'))
+            ->brandLogoHeight('64px')
+            ->favicon(asset('aman-logo.svg'))
+
             ->colors([
-                'primary' => "#24aae1",
+                'primary' => '#24aae1',
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
+
+            ->discoverResources(
+                in: app_path('Filament/Resources'),
+                for: 'App\\Filament\\Resources'
+            )
+
+            ->discoverPages(
+                in: app_path('Filament/Pages'),
+                for: 'App\\Filament\\Pages'
+            )
+
+            ->discoverClusters(
+                in: app_path('Filament/Clusters'),
+                for: 'App\\Filament\\Clusters'
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])
+
             ->databaseNotifications()
 
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(
+                in: app_path('Filament/Widgets'),
+                for: 'App\\Filament\\Widgets'
+            )
+
             ->widgets([])
-            ->plugin(ChatifyPlugin::make()->customPage(Chats::class))
-            ->plugin(\RickDBCN\FilamentEmail\FilamentEmail::make())
+
+            ->sidebarCollapsibleOnDesktop()
+
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label(fn (): string => __('System'))
+                    ->icon('heroicon-o-building-office'),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Staff Management'))
+                    ->icon('heroicon-o-briefcase'),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Account Management'))
+                    ->icon('heroicon-o-users')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Student Management'))
+                    ->icon('heroicon-o-academic-cap'),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Academic Setup'))
+                    ->icon('heroicon-o-book-open')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Default Data'))
+                    ->icon('heroicon-o-cube')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Attendance'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Examinations'))
+                    ->icon('heroicon-o-academic-cap')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Assignments'))
+                    ->icon('heroicon-o-document-text')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Calendar'))
+                    ->icon('heroicon-o-calendar-days')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Evaluations'))
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Question Bank'))
+                    ->icon('heroicon-o-question-mark-circle')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Library Management'))
+                    ->icon('heroicon-o-book-open')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Inventory'))
+                    ->icon('heroicon-o-archive-box')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Inventory Management'))
+                    ->icon('heroicon-o-archive-box')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Employee Allocations'))
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Finance'))
+                    ->icon('heroicon-o-banknotes')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Invoices'))
+                    ->icon('heroicon-o-receipt-percent')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Payroll'))
+                    ->icon('heroicon-o-currency-dollar')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Daily Balance'))
+                    ->icon('heroicon-o-arrows-right-left')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Reception'))
+                    ->icon('heroicon-o-inbox'),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Reports'))
+                    ->icon('heroicon-o-chart-pie')
+                    ->collapsed(),
+
+                NavigationGroup::make()
+                    ->label(fn (): string => __('Admin'))
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsed(),
+            ])
+
+            ->plugin(
+                ChatifyPlugin::make()
+                    ->customPage(Chats::class)
+            )
+
+            ->plugin(
+                \RickDBCN\FilamentEmail\FilamentEmail::make()
+            )
+
             ->plugin(
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->editable()
             )
-            ->plugins([AppSettingsPlugin::make()])
+
             ->plugins([
-                ApiServicePlugin::make()
+                AppSettingsPlugin::make(),
             ])
+
+            ->plugins([
+                ApiServicePlugin::make(),
+            ])
+
+            ->plugins([
+                FilamentShieldPlugin::make(),
+            ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -80,87 +231,37 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->plugins([
-                FilamentShieldPlugin::make(),
-            ])
+
+            // Footer
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
-            ->navigationGroups([
-                NavigationGroup::make()
-                    ->label(fn (): string => __('System'))
-                    ->icon('heroicon-o-building-office'),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Staff Management'))
-                    ->icon('heroicon-o-briefcase'),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Default Data'))
-                    ->icon('heroicon-o-cube'),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Student Management'))
-                    ->icon('heroicon-o-academic-cap'),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Reception'))
-                    ->icon('heroicon-o-inbox'),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Attendance'))
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Examinations'))
-                    ->icon('heroicon-o-academic-cap')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Assignments'))
-                    ->icon('heroicon-o-document-text')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Calendar'))
-                    ->icon('heroicon-o-calendar-days')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Evaluations'))
-                    ->icon('heroicon-o-clipboard-document-list')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Question Bank'))
-                    ->icon('heroicon-o-question-mark-circle')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Library Management'))
-                    ->icon('heroicon-o-book-open')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Inventory'))
-                    ->icon('heroicon-o-archive-box')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Employee Allocations'))
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Finance'))
-                    ->icon('heroicon-o-banknotes')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Payroll'))
-                    ->icon('heroicon-o-currency-dollar')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Daily Balance'))
-                    ->icon('heroicon-o-arrows-right-left')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Admin'))
-                    ->icon('heroicon-o-cog-6-tooth')
-                    ->collapsed(),
-                NavigationGroup::make()
-                    ->label(fn (): string => __('Reports'))
-                    ->icon('heroicon-o-chart-pie')
-                    ->collapsed(),
-            ])
-            ->sidebarCollapsibleOnDesktop()
+
+            // Aman Private School Login Design
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.aman-login-style')->render(),
+            )
+
+            /*
+            |--------------------------------------------------------------------------
+            | Optional Daily Transfer Navigation
+            |--------------------------------------------------------------------------
+            |
+            | Uncomment when the transfer permission is configured.
+            |
+            */
+            // ->navigationItems([
+            //     NavigationItem::make('Daily Transfer')
+            //         ->url(fn (): string => TransferFunds::getUrl())
+            //         ->icon('heroicon-o-banknotes')
+            //         ->sort(3)
+            //         ->visible(
+            //             fn (): bool => auth()->user()->can('process_transfer')
+            //         ),
+            // ])
+
             ->authMiddleware([
                 Authenticate::class,
                 AdminMiddleware::class,

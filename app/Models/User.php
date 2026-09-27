@@ -30,8 +30,17 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'last_name',
+        'father_name',
         'email',
         'password',
+        'branch_id',
+        'type',
+        'fcm_token',
+        'active_status',
+        'avatar',
+        'dark_mode',
+        'messenger_color',
     ];
     public function classAttendances()
     {

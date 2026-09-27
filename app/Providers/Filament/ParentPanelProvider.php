@@ -31,22 +31,41 @@ class ParentPanelProvider extends PanelProvider
             ->login()
             ->passwordReset()
             ->profile()
-            ->brandName(fn (): string => appReportSettings()['app_name'])
-            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
-            ->brandLogoHeight('100px')
+
+            // Aman Private School Branding
+            ->brandName('Aman Private School')
+            ->brandLogo(asset('aman-logo.svg'))
+            ->brandLogoHeight('64px')
+            ->favicon(asset('aman-logo.svg'))
+
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Parent/Resources'), for: 'App\\Filament\\Parent\\Resources')
-            ->discoverPages(in: app_path('Filament/Parent/Pages'), for: 'App\\Filament\\Parent\\Pages')
+
+            ->discoverResources(
+                in: app_path('Filament/Parent/Resources'),
+                for: 'App\\Filament\\Parent\\Resources'
+            )
+
+            ->discoverPages(
+                in: app_path('Filament/Parent/Pages'),
+                for: 'App\\Filament\\Parent\\Pages'
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Parent/Widgets'), for: 'App\\Filament\\Parent\\Widgets')
+
+            ->discoverWidgets(
+                in: app_path('Filament/Parent/Widgets'),
+                for: 'App\\Filament\\Parent\\Widgets'
+            )
+
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -58,22 +77,27 @@ class ParentPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
+
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label(fn (): string => __('Family'))
                     ->icon('heroicon-o-users'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Discipline'))
                     ->icon('heroicon-o-exclamation-triangle'),
             ])
+
             ->sidebarCollapsibleOnDesktop()
+
             ->authMiddleware([
                 Authenticate::class,
-                ParentMiddleware::class
+                ParentMiddleware::class,
             ]);
     }
 }

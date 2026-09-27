@@ -29,8 +29,18 @@ use App\Http\Controllers\StudentInformationReportController;
 
 
 Route::get('/', function () {
-    return view('welcome');
-});
+    return view('pages.home');
+})->name('home');
+
+Route::view('/about', 'pages.about')->name('about');
+Route::view('/services', 'pages.services')->name('services');
+Route::view('/admissions', 'pages.admissions')->name('admissions');
+Route::view('/news', 'pages.news')->name('news');
+Route::view('/contact', 'pages.contact')->name('contact');
+
+Route::get('/login-portal', function () {
+    return view('login-portal');
+})->name('login.portal');
 
 Route::get('/export/class-attendance', function () {
     $records = ClassAttendance::with(['student', 'class', 'branch'])->latest()->get();

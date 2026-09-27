@@ -9,6 +9,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Teacher extends Model
 {
+    protected $fillable = [
+        'user_id',
+        'designation',
+        'department',
+        'father_name',
+        'mother_name',
+        'gender',
+        'marital_status',
+        'date_of_birth',
+        'joining_date',
+        'photo',
+        'current_address',
+        'permanent_address',
+        'qualification',
+        'work_experience',
+        'note',
+        'basic_salary',
+        'contract_type',
+        'work_from',
+        'work_to',
+        'title',
+        'bank_account_number',
+        'bank_name',
+        'ifsc_code',
+        'bank_branch',
+    ];
+
     protected $casts = [
         'dob' => 'date',
         'joining_date' => 'date',

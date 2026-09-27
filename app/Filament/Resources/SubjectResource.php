@@ -22,7 +22,7 @@ class SubjectResource extends Resource
     protected static ?int $navigationSort = 3;
 public static function getNavigationGroup(): string
 {
-    return __('Default Data');
+    return __('Academic Setup');
 }
 
 public static function getNavigationLabel(): string

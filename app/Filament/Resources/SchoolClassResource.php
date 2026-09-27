@@ -21,7 +21,7 @@ class SchoolClassResource extends Resource
     protected static ?int $navigationSort = 1; // after Branch: create class
     public static function getNavigationGroup(): string
     {
-        return __('Default Data');
+        return __('Academic Setup');
     }
 
     public static function getNavigationLabel(): string

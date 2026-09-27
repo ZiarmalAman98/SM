@@ -1,3 +1,4 @@
+```php
 <?php
 
 namespace App\Providers\Filament;
@@ -31,26 +32,45 @@ class StudentPanelProvider extends PanelProvider
             ->path('student')
             ->login()
             ->profile()
-            ->brandName(fn (): string => appReportSettings()['app_name'])
-            ->brandLogo(fn (): string => appReportSettings()['app_dark_theme_logo_url'])
-            ->brandLogoHeight('100px')
+
+            // Aman Private School Branding
+            ->brandName('Aman Private School')
+            ->brandLogo(asset('aman-logo.svg'))
+            ->brandLogoHeight('64px')
+            ->favicon(asset('aman-logo.svg'))
+
             ->colors([
-                'primary' => "#24aae1",
+                'primary' => '#24aae1',
             ])
-            ->discoverResources(in: app_path('Filament/Student/Resources'), for: 'App\\Filament\\Student\\Resources')
-            ->discoverPages(in: app_path('Filament/Student/Pages'), for: 'App\\Filament\\Student\\Pages')
+
+            ->discoverResources(
+                in: app_path('Filament/Student/Resources'),
+                for: 'App\\Filament\\Student\\Resources'
+            )
+
+            ->discoverPages(
+                in: app_path('Filament/Student/Pages'),
+                for: 'App\\Filament\\Student\\Pages'
+            )
+
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Student/Widgets'), for: 'App\\Filament\\Student\\Widgets')
+
+            ->discoverWidgets(
+                in: app_path('Filament/Student/Widgets'),
+                for: 'App\\Filament\\Student\\Widgets'
+            )
+
             ->widgets([
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
             ])
+
             ->passwordReset()
+
             ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
-            // ->brandName('Afghan Cosmos')
-            // ->brandLogoHeight('4rem')
+
             ->sidebarCollapsibleOnDesktop()
 
             ->middleware([
@@ -63,47 +83,57 @@ class StudentPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                // \Hasnayeen\Themes\Http\Middleware\SetTheme::class
-
             ])
+
             ->plugins([
                 // \Hasnayeen\Themes\ThemesPlugin::make()
                 //     ->canViewThemesPage(fn() => false),
             ])
+
             ->plugin(
                 ChatifyPlugin::make()
             )
+
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => view('filament.footer.afghan-cosmos')->render(),
             )
+
             ->navigationGroups([
                 NavigationGroup::make()
                     ->label(fn (): string => __('Academic'))
                     ->icon('heroicon-o-book-open'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Attendance'))
                     ->icon('heroicon-o-document-check')
                     ->collapsed(),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Student Leave'))
                     ->icon('heroicon-o-arrow-right-start-on-rectangle')
                     ->collapsed(),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Homeworks'))
                     ->icon('heroicon-o-paper-clip'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Finance'))
                     ->icon('heroicon-o-banknotes'),
+
                 NavigationGroup::make()
                     ->label(fn (): string => __('Reception'))
                     ->icon('heroicon-o-inbox'),
             ])
+
             ->spa()
             ->databaseNotifications()
+
             ->authMiddleware([
                 Authenticate::class,
-                StudentMiddleware::class
+                StudentMiddleware::class,
             ]);
     }
 }
+```

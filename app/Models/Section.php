@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Section extends Model
 {
-    //
+    protected $fillable = ['name'];
+
     public function students(): HasMany
     {
         return $this->hasMany(Student::class);

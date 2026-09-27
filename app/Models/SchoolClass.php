@@ -25,7 +25,7 @@ class SchoolClass extends Model
 
 
 
-    protected $fillable = ['class_name', 'description'];
+    protected $fillable = ['branch_id', 'teacher_id', 'class_name', 'description'];
 
     public function feeGroupAssignments(): MorphMany
     {
